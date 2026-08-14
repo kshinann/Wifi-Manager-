@@ -178,9 +178,13 @@ class SpeedTestEngine(
     }
 
     companion object {
-        // 100,000,000 bytes/stream is Cloudflare's documented max for __down; sized generously
-        // so a fast link is bounded by maxDurationMs, not by running out of bytes to read.
-        const val DEFAULT_DOWNLOAD_URL = "https://speed.cloudflare.com/__down?bytes=100000000"
+        // 26,214,400 (25MB) is a conservative, empirically-working size per stream. A larger
+        // value was tried (assuming a higher documented cap) but caused __down to fail outright
+        // for every parallel stream on-device, so this stays conservative rather than guessed.
+        // With PARALLEL_STREAMS concurrent requests this is still 100MB aggregate available,
+        // comfortably enough that maxDurationMs -- not running out of bytes -- is what limits
+        // the test on any realistic home/mobile link.
+        const val DEFAULT_DOWNLOAD_URL = "https://speed.cloudflare.com/__down?bytes=26214400"
         const val DEFAULT_UPLOAD_URL = "https://speed.cloudflare.com/__up"
         const val PUBLIC_LATENCY_HOST = "1.1.1.1"
         const val PARALLEL_STREAMS = 4

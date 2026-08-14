@@ -78,8 +78,12 @@ fun ScanScreen() {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (!PermissionUtils.isLocationEnabled(context)) {
+            val locationEnabled = PermissionUtils.isLocationEnabled(context)
+            if (!locationEnabled) {
                 item { LocationDisabledBanner() }
+            }
+            if (networks.isEmpty() && locationEnabled) {
+                item { EmptyResultsTroubleshooting(onRescan = { viewModel.rescan() }) }
             }
             if (congestion.isNotEmpty()) {
                 item { ChannelCongestionCard(congestion) }
@@ -115,6 +119,37 @@ private fun LocationDisabledBanner() {
                     Text("Open location settings")
                 }
             }
+        }
+    }
+}
+
+/**
+ * Shown when Wi-Fi is on, this app's permission is granted, and device Location is on, but
+ * the scan list is still empty — which shouldn't normally happen (a device sees at least its
+ * own connected network). Some OEM Android builds gate scan results behind an extra,
+ * non-standard per-app permission beyond what stock Android requires, so point the user at
+ * the app's own settings page in addition to a manual rescan.
+ */
+@Composable
+private fun EmptyResultsTroubleshooting(onRescan: () -> Unit) {
+    val context = LocalContext.current
+    SectionCard(title = "No networks found yet") {
+        Text(
+            "Permission is granted and Location is on, so this is usually just a scan still in " +
+                "progress (Android limits how often apps can request one). If it stays empty:\n\n" +
+                "• Try Rescan below\n" +
+                "• Some phone brands (e.g. Xiaomi/HyperOS, Oppo, Vivo) have an extra permission " +
+                "toggle for Wi-Fi/nearby devices under the app's own settings, separate from the " +
+                "permission prompt you already answered — check \"Open app settings\" below",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = onRescan) { Text("Rescan") }
+            TextButton(onClick = {
+                val uri = android.net.Uri.fromParts("package", context.packageName, null)
+                context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, uri))
+            }) { Text("Open app settings") }
         }
     }
 }
