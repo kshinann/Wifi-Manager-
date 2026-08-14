@@ -38,7 +38,7 @@
 
         <!--
             AdMob App ID. This is Google's published TEST app ID (safe to ship, only ever
-            serves clearly-labeled test ads) -- replace with your own real App ID from
+            serves clearly-labeled test ads); replace with your own real App ID from
             https://apps.admob.com before a production release, or ads will never seriously
             monetize. See README.md's "Ads (AdMob)" section.
         -->
