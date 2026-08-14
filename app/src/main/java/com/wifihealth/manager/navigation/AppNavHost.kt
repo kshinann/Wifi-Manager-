@@ -1,5 +1,6 @@
 package com.wifihealth.manager.navigation
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -14,6 +15,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
+import com.wifihealth.manager.ui.components.BannerAdView
 import com.wifihealth.manager.ui.dashboard.DashboardScreen
 import com.wifihealth.manager.ui.recommendations.RecommendationsScreen
 import com.wifihealth.manager.ui.scan.ScanScreen
@@ -25,24 +27,27 @@ fun AppNavHost() {
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                val backStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = backStackEntry?.destination?.route
-                Destination.entries.forEach { destination ->
-                    NavigationBarItem(
-                        selected = currentRoute == destination.route,
-                        onClick = {
-                            navController.navigate(destination.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+            Column {
+                BannerAdView()
+                NavigationBar {
+                    val backStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = backStackEntry?.destination?.route
+                    Destination.entries.forEach { destination ->
+                        NavigationBarItem(
+                            selected = currentRoute == destination.route,
+                            onClick = {
+                                navController.navigate(destination.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(destination.icon, contentDescription = destination.label) },
-                        label = { Text(destination.label) },
-                    )
+                            },
+                            icon = { Icon(destination.icon, contentDescription = destination.label) },
+                            label = { Text(destination.label) },
+                        )
+                    }
                 }
             }
         },

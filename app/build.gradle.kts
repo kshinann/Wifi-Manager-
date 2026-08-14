@@ -1,9 +1,22 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
 }
+
+// Release signing comes from keystore.properties (gitignored, never committed) or from
+// KEYSTORE_* environment variables (for CI). See keystore.properties.example for the format
+// and README.md's "Publishing to Play Store" section for how to generate the keystore itself.
+val keystoreProperties = Properties().apply {
+    val propsFile = rootProject.file("keystore.properties")
+    if (propsFile.exists()) load(FileInputStream(propsFile))
+}
+fun signingProp(propKey: String, envKey: String): String? =
+    keystoreProperties.getProperty(propKey) ?: System.getenv(envKey)
 
 android {
     namespace = "com.wifihealth.manager"
@@ -19,13 +32,32 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            val storeFilePath = signingProp("storeFile", "KEYSTORE_STORE_FILE")
+            if (storeFilePath != null) {
+                storeFile = rootProject.file(storeFilePath)
+                storePassword = signingProp("storePassword", "KEYSTORE_STORE_PASSWORD")
+                keyAlias = signingProp("keyAlias", "KEYSTORE_KEY_ALIAS")
+                keyPassword = signingProp("keyPassword", "KEYSTORE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Falls back to an unsigned build if no keystore is configured, so `./gradlew
+            // assembleRelease` still works locally without secrets -- Play Store upload just
+            // requires an actually-signed build, which needs keystore.properties present.
+            if (keystoreProperties.getProperty("storeFile") != null || System.getenv("KEYSTORE_STORE_FILE") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         debug {
             isMinifyEnabled = false
@@ -78,6 +110,8 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+
+    implementation("com.google.android.gms:play-services-ads:23.3.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
