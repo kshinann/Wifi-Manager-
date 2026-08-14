@@ -10,6 +10,9 @@ data class WifiNetwork(
     val band: Band,
     val security: SecurityType,
     val isHidden: Boolean,
+    val channelWidthLabel: String,
+    val lastSeenSecondsAgo: Long,
+    val rawCapabilities: String,
 ) {
     val signalQuality: SignalQuality get() = SignalQuality.fromRssi(rssiDbm)
 }

@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.wifi.ScanResult
 import android.net.wifi.WifiManager
+import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import com.wifihealth.manager.data.model.Band
 import com.wifihealth.manager.data.model.SecurityType
@@ -73,6 +74,24 @@ class WifiScanner(context: Context) {
             band = Band.fromFrequencyMhz(frequency),
             security = SecurityType.fromCapabilities(capabilities ?: ""),
             isHidden = hidden,
+            channelWidthLabel = channelWidthLabel(this),
+            lastSeenSecondsAgo = lastSeenSecondsAgo(this),
+            rawCapabilities = capabilities ?: "",
         )
+    }
+
+    private fun channelWidthLabel(scanResult: ScanResult): String = when (scanResult.channelWidth) {
+        ScanResult.CHANNEL_WIDTH_20MHZ -> "20 MHz"
+        ScanResult.CHANNEL_WIDTH_40MHZ -> "40 MHz"
+        ScanResult.CHANNEL_WIDTH_80MHZ -> "80 MHz"
+        ScanResult.CHANNEL_WIDTH_160MHZ -> "160 MHz"
+        ScanResult.CHANNEL_WIDTH_80MHZ_PLUS_MHZ -> "80+80 MHz"
+        5 -> "320 MHz" // ScanResult.CHANNEL_WIDTH_320MHZ (API 33); raw value for minSdk-26 compatibility
+        else -> "Unknown"
+    }
+
+    private fun lastSeenSecondsAgo(scanResult: ScanResult): Long {
+        val ageMicros = SystemClock.elapsedRealtime() * 1000 - scanResult.timestamp
+        return (ageMicros / 1_000_000).coerceAtLeast(0)
     }
 }

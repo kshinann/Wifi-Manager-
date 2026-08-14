@@ -3,8 +3,10 @@ package com.wifihealth.manager.util
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Build
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 
 object PermissionUtils {
 
@@ -20,4 +22,16 @@ object PermissionUtils {
         requiredWifiPermissions().all {
             ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
+
+    /**
+     * Whether the device-wide Location toggle is on. Independent of the app's own runtime
+     * permission grant: on most OEM builds (and stock Android 9+), Wi-Fi scan results come back
+     * empty or badly incomplete whenever this system setting is off, regardless of what the app
+     * itself was granted.
+     */
+    fun isLocationEnabled(context: Context): Boolean {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+            ?: return false
+        return LocationManagerCompat.isLocationEnabled(locationManager)
+    }
 }

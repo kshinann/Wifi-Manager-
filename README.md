@@ -79,12 +79,24 @@ for reading Wi-Fi metadata, not something this app uses for positioning.
 
 Throughput is measured against Cloudflare's public speed-test endpoints
 (`speed.cloudflare.com/__down` / `__up`), the same infrastructure used by
-several open-source speed test clients — no API key required. Latency is
-measured as a raw TCP-connect round trip to `1.1.1.1:443` (internet) and to
-the DHCP gateway on port 80 (local hop), which lets a recommendation
-distinguish "your Wi-Fi is fine, the problem is upstream" from "the problem
-is local interference." Both endpoints are simple constructor defaults in
-`SpeedTestEngine` and can be pointed at a self-hosted test server instead.
+several open-source speed test clients — no API key required. Both endpoints
+are simple constructor defaults in `SpeedTestEngine` and can be pointed at a
+self-hosted test server instead.
+
+Download/upload each open **4 parallel connections** (`SpeedTestEngine.PARALLEL_STREAMS`)
+and sum their throughput, the same approach Ookla/speedtest.net uses. A
+single TCP stream is a poor proxy for link capacity — TCP slow-start and a
+single connection's window ceiling mean one stream alone typically reads
+well below what the link can actually do, especially on faster connections.
+
+Latency is measured as a raw TCP-connect round trip to `1.1.1.1:443`
+(internet) and to the DHCP gateway on port 80 (local hop), which lets a
+recommendation distinguish "your Wi-Fi is fine, the problem is upstream"
+from "the problem is local interference." Note the local-hop number can
+legitimately be *higher* than the internet one on some routers — a cheap
+router's embedded CPU answering a TCP handshake is often slower than a
+CDN's hardware-accelerated edge, so a high "local latency" isn't necessarily
+a bug in the measurement.
 
 ## Building
 
