@@ -1,0 +1,9 @@
+{
+  "name": "Wi-Fi Security Academy",
+  "short_name": "WiFi Academy",
+  "description": "Learn how Wi-Fi security (WEP/WPA/WPA2/WPA3) works through simulated, sample-data-only demos.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a"
+}
