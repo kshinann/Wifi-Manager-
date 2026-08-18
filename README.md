@@ -34,6 +34,16 @@ uvicorn backend.app.main:app --reload --port 8000
 
 Then open http://localhost:8000 in your browser.
 
+## Run with Docker
+
+```bash
+docker build -t video-downloader .
+docker run --rm -p 8000:8000 video-downloader
+```
+
+Then open http://localhost:8000 in your browser. The image bundles ffmpeg,
+so there's nothing else to install.
+
 ## API
 
 - `POST /api/info` — body `{"url": "..."}` — returns title, thumbnail, duration,
