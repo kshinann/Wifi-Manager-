@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Video Downloader</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <h1>Video Downloader</h1>
+    <p class="subtitle">Paste a link from YouTube or any other supported site.</p>
+
+    <form id="info-form" class="url-form">
+      <input
+        id="url-input"
+        type="url"
+        placeholder="https://www.youtube.com/watch?v=..."
+        required
+      />
+      <button type="submit" id="fetch-btn">Fetch</button>
+    </form>
+
+    <p id="status" class="status" hidden></p>
+
+    <section id="result" class="result" hidden>
+      <div class="video-card">
+        <img id="thumbnail" alt="thumbnail" />
+        <div class="video-meta">
+          <h2 id="title"></h2>
+          <p id="uploader"></p>
+          <p id="duration"></p>
+        </div>
+      </div>
+
+      <div class="options">
+        <label>
+          Format
+          <select id="format-select"></select>
+        </label>
+        <label id="resolution-label">
+          Resolution
+          <select id="resolution-select"></select>
+        </label>
+        <button id="download-btn" type="button">Download</button>
+      </div>
+      <p id="download-status" class="status" hidden></p>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
