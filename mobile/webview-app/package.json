@@ -1,0 +1,15 @@
+{
+  "name": "video-downloader-webview",
+  "version": "1.0.0",
+  "description": "Android WebView wrapper around the Video Downloader web app",
+  "private": true,
+  "scripts": {
+    "sync": "cap sync android"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0"
+  }
+}

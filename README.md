@@ -44,6 +44,12 @@ docker run --rm -p 8000:8000 video-downloader
 Then open http://localhost:8000 in your browser. The image bundles ffmpeg,
 so there's nothing else to install.
 
+## Android apps
+
+Two Android app projects live under `mobile/` — a WebView wrapper around
+this same frontend, and a standalone native app that calls the API
+directly. See `mobile/README.md` for details and build instructions.
+
 ## API
 
 - `POST /api/info` — body `{"url": "..."}` — returns title, thumbnail, duration,

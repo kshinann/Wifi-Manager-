@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Video Downloader</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="setup-screen" class="screen">
+    <div class="setup-card">
+      <h1>Video Downloader</h1>
+      <p class="hint">
+        Enter the address of your Video Downloader server (the one running
+        the FastAPI backend), e.g. <code>http://192.168.1.20:8000</code>.
+      </p>
+      <input
+        id="server-url"
+        type="url"
+        placeholder="http://192.168.1.20:8000"
+        autocapitalize="off"
+        autocorrect="off"
+      />
+      <button id="connect-btn">Connect</button>
+      <p id="setup-error" class="error" hidden></p>
+    </div>
+  </div>
+
+  <div id="app-screen" class="screen" hidden>
+    <div class="topbar">
+      <span id="server-label"></span>
+      <button id="change-server-btn" class="link-btn">Change server</button>
+    </div>
+    <iframe id="app-frame" title="Video Downloader"></iframe>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
