@@ -1,6 +1,8 @@
 package com.wifihealth.manager.di
 
 import android.content.Context
+import com.wifihealth.manager.data.lan.KnownDeviceStore
+import com.wifihealth.manager.data.lan.LanDeviceScanner
 import com.wifihealth.manager.data.model.ConnectionSnapshot
 import com.wifihealth.manager.data.model.WifiNetwork
 import com.wifihealth.manager.data.speedtest.SpeedTestEngine
@@ -31,6 +33,8 @@ class AppContainer(context: Context) {
     val connectionMonitor = ConnectionMonitor(context)
     val speedTestEngine = SpeedTestEngine()
     val speedTestHistoryStore = SpeedTestHistoryStore(context)
+    val lanDeviceScanner = LanDeviceScanner()
+    val knownDeviceStore = KnownDeviceStore(context)
 
     val connectionState: StateFlow<ConnectionSnapshot> = connectionMonitor.connectionFlow()
         .stateIn(applicationScope, SharingStarted.WhileSubscribed(5_000), ConnectionSnapshot.EMPTY)

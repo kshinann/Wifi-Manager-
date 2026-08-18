@@ -20,6 +20,9 @@ recommendations for improving it.
   closer to the router, switch to WPA2/WPA3, change the router's channel,
   switch band, etc.), each derived from a specific rule against the data
   above — not generic tips.
+- **Devices** — a best-effort scan of who else is on your local network, so
+  you can spot an unrecognized device. See "Devices / intruder detection"
+  below for exactly what this can and can't actually see.
 
 ## Why native Android (Kotlin), not cross-platform
 
@@ -46,6 +49,13 @@ app/src/main/java/com/wifihealth/manager/
 │   │   ├── SpeedTestEngine.kt        OkHttp download/upload + raw-socket
 │   │   │                            latency/jitter measurement
 │   │   └── SpeedTestHistoryStore.kt  DataStore-backed local history
+│   ├── lan/
+│   │   ├── SubnetPlanner.kt      Pure IPv4 subnet math (which addresses to
+│   │   │                        probe), no Android dependency
+│   │   ├── LanDeviceScanner.kt   Bounded-concurrency TCP probe across the
+│   │   │                        subnet -- see "Devices" below for what this
+│   │   │                        can/can't detect
+│   │   └── KnownDeviceStore.kt   DataStore-backed "these are mine" allow-list
 │   └── recommendation/
 │       └── RecommendationEngine.kt  Pure, stateless rule engine: connection +
 │                                    scan + speed test → health score + advice
@@ -54,7 +64,7 @@ app/src/main/java/com/wifihealth/manager/
 │                         StateFlows so screens don't each register their own
 │                         BroadcastReceiver/NetworkCallback
 ├── ui/                   Jetpack Compose screens + ViewModels, one package
-│                         per feature (dashboard, scan, speedtest,
+│                         per feature (dashboard, scan, devices, speedtest,
 │                         recommendations), plus shared theme/components
 └── navigation/           Bottom-nav Destinations + NavHost
 ```
@@ -97,6 +107,39 @@ legitimately be *higher* than the internet one on some routers — a cheap
 router's embedded CPU answering a TCP handshake is often slower than a
 CDN's hardware-accelerated edge, so a high "local latency" isn't necessarily
 a bug in the measurement.
+
+## Devices / intruder detection
+
+The Devices tab sweeps the current subnet and probes a handful of common TCP
+ports per address (`LanDeviceScanner`), so you can spot something on your
+network you don't recognize. It's worth being precise about what this is
+and isn't, since "check for intruders" invites assuming more than an app
+without root or router access can actually deliver:
+
+- **No MAC address or manufacturer info.** Android has blocked apps from
+  reading other devices' MAC addresses via ARP since Android 10, specifically
+  to prevent cross-app/cross-device tracking. That means no "vendor: Apple"
+  or "vendor: Samsung" hints — just an IP address and, occasionally, a
+  hostname if the router happens to do reverse DNS for its clients (most
+  consumer routers don't).
+- **Can miss real devices.** A host is flagged "alive" if a TCP connection
+  either succeeds or is refused fast (a fast refusal still proves something
+  answered). Routers, computers, printers and IoT gear usually have at least
+  one open port and get caught reliably. Phones and tablets that run no
+  listening service and silently drop unsolicited traffic can be missed
+  entirely — this is a heuristic sweep, not a guaranteed inventory.
+- **"Unrecognized" can be a false alarm.** Devices are tracked by IP address
+  (the only identifier available without root), and a router reassigning
+  DHCP leases -- e.g. after a reboot -- can make a device you already
+  approved reappear as "new." That's a limitation of the technique, not
+  necessarily a sign of an intruder.
+- **The actually-authoritative list lives on the router itself** (its DHCP
+  client table), which isn't something a LAN peer app can query without
+  router-specific admin credentials and a per-brand integration -- out of
+  scope for this app. If you get an unrecognized-device hit you're unsure
+  about, cross-check it against your router's own admin page.
+
+In short: treat a flagged device as a prompt to go look, not a verdict.
 
 ## Building
 

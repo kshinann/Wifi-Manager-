@@ -17,6 +17,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
 import com.wifihealth.manager.ui.components.BannerAdView
 import com.wifihealth.manager.ui.dashboard.DashboardScreen
+import com.wifihealth.manager.ui.devices.DevicesScreen
 import com.wifihealth.manager.ui.recommendations.RecommendationsScreen
 import com.wifihealth.manager.ui.scan.ScanScreen
 import com.wifihealth.manager.ui.speedtest.SpeedTestScreen
@@ -67,6 +68,7 @@ fun AppNavHost() {
                 )
             }
             composable(Destination.SCAN.route) { ScanScreen() }
+            composable(Destination.DEVICES.route) { DevicesScreen() }
             composable(Destination.SPEED_TEST.route) { SpeedTestScreen() }
             composable(Destination.RECOMMENDATIONS.route) { RecommendationsScreen() }
         }
