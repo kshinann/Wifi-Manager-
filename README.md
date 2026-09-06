@@ -6,7 +6,9 @@ format and resolution of your choice.
 
 ## Features
 
-- Paste any video URL to fetch its title, thumbnail, duration, and available formats.
+- Search YouTube right from the app, or paste any video URL directly.
+- Play the selected video inline (via YouTube's own embeddable player) before downloading it.
+- Fetch a video's title, thumbnail, duration, and available formats.
 - Choose an output container (`mp4`, `webm`, `mkv`, `mov`) or extract audio only
   (`mp3`, `m4a`, `wav`, `aac`, `opus`, `flac`).
 - Pick a target resolution, or let it grab the best available.
@@ -52,6 +54,8 @@ directly. See `mobile/README.md` for details and build instructions.
 
 ## API
 
+- `POST /api/search` — body `{"query": "...", "limit": 12}` — returns lightweight
+  results (id, title, uploader, duration, thumbnail, url) for a YouTube search.
 - `POST /api/info` — body `{"url": "..."}` — returns title, thumbnail, duration,
   and the list of available formats for a video.
 - `POST /api/download` — body `{"url": "...", "format": "mp4", "height": 1080}` —
@@ -62,6 +66,9 @@ directly. See `mobile/README.md` for details and build instructions.
 
 ## Notes
 
+- Search results come from `yt-dlp`'s search support (no API key needed), and
+  playback uses YouTube's own official embeddable player — downloading is a
+  separate, explicit action.
 - Only download content you have the right to download (your own videos,
   content licensed for download, or sites that explicitly permit it). Respect
   the terms of service of the site you're downloading from.

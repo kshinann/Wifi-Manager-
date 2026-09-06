@@ -1,12 +1,17 @@
 const VIDEO_FORMATS = ["mp4", "webm", "mkv", "mov"];
 const AUDIO_FORMATS = ["mp3", "m4a", "wav", "aac", "opus", "flac"];
+const URL_PATTERN = /^https?:\/\//i;
 
-const infoForm = document.getElementById("info-form");
-const urlInput = document.getElementById("url-input");
-const fetchBtn = document.getElementById("fetch-btn");
+const searchForm = document.getElementById("search-form");
+const searchInput = document.getElementById("search-input");
+const searchBtn = document.getElementById("search-btn");
 const statusEl = document.getElementById("status");
-const resultEl = document.getElementById("result");
+const resultsGrid = document.getElementById("results-grid");
 
+const playerSection = document.getElementById("player-section");
+const playerFrame = document.getElementById("player-frame");
+
+const resultEl = document.getElementById("result");
 const thumbnailEl = document.getElementById("thumbnail");
 const titleEl = document.getElementById("title");
 const uploaderEl = document.getElementById("uploader");
@@ -38,6 +43,28 @@ function formatDuration(seconds) {
   const s = Math.floor(seconds % 60);
   const parts = h ? [h, m, s] : [m, s];
   return parts.map((p, i) => (i === 0 ? p : String(p).padStart(2, "0"))).join(":");
+}
+
+function youtubeIdFromUrl(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes("youtu.be")) return u.pathname.slice(1);
+    if (u.hostname.includes("youtube.com")) return u.searchParams.get("v");
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function showPlayerFor(url) {
+  const videoId = youtubeIdFromUrl(url);
+  if (!videoId) {
+    playerSection.hidden = true;
+    playerFrame.src = "";
+    return;
+  }
+  playerFrame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+  playerSection.hidden = false;
 }
 
 function populateFormatOptions() {
@@ -76,15 +103,11 @@ function updateResolutionVisibility() {
   resolutionLabel.hidden = isAudio;
 }
 
-infoForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const url = urlInput.value.trim();
-  if (!url) return;
-
+async function loadVideo(url) {
   currentUrl = url;
   resultEl.hidden = true;
   setStatus(statusEl, "Fetching video info...");
-  fetchBtn.disabled = true;
+  showPlayerFor(url);
 
   try {
     const res = await fetch("/api/info", {
@@ -116,10 +139,75 @@ infoForm.addEventListener("submit", async (e) => {
 
     setStatus(statusEl, "");
     resultEl.hidden = false;
+    resultEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } catch (err) {
+    setStatus(statusEl, err.message, true);
+  }
+}
+
+function renderResults(results) {
+  resultsGrid.innerHTML = "";
+  if (!results.length) {
+    resultsGrid.hidden = true;
+    return;
+  }
+
+  for (const r of results) {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "result-card";
+    card.innerHTML = `
+      <img src="${r.thumbnail || ""}" alt="" loading="lazy" />
+      <div class="card-body">
+        <div class="card-title"></div>
+        <p class="card-meta"></p>
+      </div>
+    `;
+    card.querySelector(".card-title").textContent = r.title || "Untitled";
+    const meta = [r.uploader, r.duration ? formatDuration(r.duration) : null]
+      .filter(Boolean)
+      .join(" · ");
+    card.querySelector(".card-meta").textContent = meta;
+    card.addEventListener("click", () => loadVideo(r.url));
+    resultsGrid.appendChild(card);
+  }
+
+  resultsGrid.hidden = false;
+}
+
+searchForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const query = searchInput.value.trim();
+  if (!query) return;
+
+  searchBtn.disabled = true;
+  resultsGrid.hidden = true;
+  playerSection.hidden = true;
+  resultEl.hidden = true;
+
+  if (URL_PATTERN.test(query)) {
+    await loadVideo(query);
+    searchBtn.disabled = false;
+    return;
+  }
+
+  setStatus(statusEl, "Searching...");
+  try {
+    const res = await fetch("/api/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || "Search failed");
+    }
+    setStatus(statusEl, "");
+    renderResults(data.results || []);
   } catch (err) {
     setStatus(statusEl, err.message, true);
   } finally {
-    fetchBtn.disabled = false;
+    searchBtn.disabled = false;
   }
 });
 

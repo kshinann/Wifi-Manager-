@@ -15,6 +15,40 @@ AUDIO_ONLY_FORMATS = {"mp3", "m4a", "wav", "aac", "opus", "flac"}
 VIDEO_CONTAINERS = {"mp4", "mkv", "webm", "mov"}
 
 
+def search_videos(query: str, limit: int = 12) -> list:
+    """Search YouTube for `query` and return lightweight metadata for each result."""
+    limit = max(1, min(limit, 25))
+    ydl_opts = {
+        "quiet": True,
+        "no_warnings": True,
+        "skip_download": True,
+        "extract_flat": "in_playlist",
+        "default_search": "ytsearch",
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(f"ytsearch{limit}:{query}", download=False)
+
+    results = []
+    for e in info.get("entries") or []:
+        if not e:
+            continue
+        video_id = e.get("id")
+        results.append(
+            {
+                "id": video_id,
+                "title": e.get("title"),
+                "uploader": e.get("uploader") or e.get("channel"),
+                "duration": e.get("duration"),
+                "thumbnail": e.get("thumbnail")
+                or (f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg" if video_id else None),
+                "url": e.get("url")
+                or e.get("webpage_url")
+                or (f"https://www.youtube.com/watch?v={video_id}" if video_id else None),
+            }
+        )
+    return results
+
+
 def fetch_info(url: str) -> dict:
     """Return metadata and available formats for a video URL, without downloading it."""
     ydl_opts = {

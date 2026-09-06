@@ -9,19 +9,32 @@
 <body>
   <main class="app">
     <h1>Video Downloader</h1>
-    <p class="subtitle">Paste a link from YouTube or any other supported site.</p>
+    <p class="subtitle">Search YouTube, or paste a link from any supported site.</p>
 
-    <form id="info-form" class="url-form">
+    <form id="search-form" class="url-form">
       <input
-        id="url-input"
-        type="url"
-        placeholder="https://www.youtube.com/watch?v=..."
+        id="search-input"
+        type="text"
+        placeholder="Search YouTube, or paste a video URL..."
         required
       />
-      <button type="submit" id="fetch-btn">Fetch</button>
+      <button type="submit" id="search-btn">Go</button>
     </form>
 
     <p id="status" class="status" hidden></p>
+
+    <div id="results-grid" class="results-grid" hidden></div>
+
+    <section id="player-section" class="player-section" hidden>
+      <div class="player-wrap">
+        <iframe
+          id="player-frame"
+          title="Video player"
+          allow="autoplay; encrypted-media; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </section>
 
     <section id="result" class="result" hidden>
       <div class="video-card">

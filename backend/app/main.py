@@ -25,6 +25,11 @@ class InfoRequest(BaseModel):
     url: str
 
 
+class SearchRequest(BaseModel):
+    query: str
+    limit: int = Field(12, ge=1, le=25)
+
+
 class DownloadRequest(BaseModel):
     url: str
     format: str = Field(..., description="Desired output format/container, e.g. mp4, webm, mp3")
@@ -36,6 +41,14 @@ class DownloadRequest(BaseModel):
 def get_info(payload: InfoRequest):
     try:
         return downloader.fetch_info(payload.url)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/api/search")
+def search(payload: SearchRequest):
+    try:
+        return {"results": downloader.search_videos(payload.query, payload.limit)}
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
