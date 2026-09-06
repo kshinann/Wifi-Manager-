@@ -2,6 +2,11 @@ const VIDEO_FORMATS = ["mp4", "webm", "mkv", "mov"];
 const AUDIO_FORMATS = ["mp3", "m4a", "wav", "aac", "opus", "flac"];
 const URL_PATTERN = /^https?:\/\//i;
 
+// Inside the Android app, the backend runs in-process on 127.0.0.1 instead
+// of a real server (see mobile/README.md) — everything else is identical.
+const IS_EMBEDDED_APP = typeof window.Capacitor !== "undefined";
+const API_BASE = IS_EMBEDDED_APP ? "http://127.0.0.1:8765" : "";
+
 const searchForm = document.getElementById("search-form");
 const searchInput = document.getElementById("search-input");
 const searchBtn = document.getElementById("search-btn");
@@ -110,7 +115,7 @@ async function loadVideo(url) {
   showPlayerFor(url);
 
   try {
-    const res = await fetch("/api/info", {
+    const res = await fetch(`${API_BASE}/api/info`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url }),
@@ -193,7 +198,7 @@ searchForm.addEventListener("submit", async (e) => {
 
   setStatus(statusEl, "Searching...");
   try {
-    const res = await fetch("/api/search", {
+    const res = await fetch(`${API_BASE}/api/search`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query }),
@@ -221,7 +226,7 @@ downloadBtn.addEventListener("click", async () => {
   setStatus(downloadStatusEl, "Preparing download... this can take a while for large videos.");
 
   try {
-    const res = await fetch("/api/download", {
+    const res = await fetch(`${API_BASE}/api/download`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: currentUrl, format, height }),
@@ -230,6 +235,15 @@ downloadBtn.addEventListener("click", async () => {
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       throw new Error(data.detail || "Download failed");
+    }
+
+    if (IS_EMBEDDED_APP) {
+      // The embedded server saves straight into the device's Downloads
+      // folder and reports back the filename, rather than streaming bytes
+      // for the page to save (blob: downloads aren't reliable in a WebView).
+      const data = await res.json();
+      setStatus(downloadStatusEl, `Saved to Downloads as ${data.saved_as}`);
+      return;
     }
 
     const disposition = res.headers.get("Content-Disposition") || "";

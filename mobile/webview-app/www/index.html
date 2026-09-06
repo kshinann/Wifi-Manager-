@@ -2,38 +2,64 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Video Downloader</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="setup-screen" class="screen">
-    <div class="setup-card">
-      <h1>Video Downloader</h1>
-      <p class="hint">
-        Enter the address of your Video Downloader server (the one running
-        the FastAPI backend), e.g. <code>http://192.168.1.20:8000</code>.
-      </p>
+  <main class="app">
+    <h1>Video Downloader</h1>
+    <p class="subtitle">Search YouTube, or paste a link from any supported site.</p>
+
+    <form id="search-form" class="url-form">
       <input
-        id="server-url"
-        type="url"
-        placeholder="http://192.168.1.20:8000"
-        autocapitalize="off"
-        autocorrect="off"
+        id="search-input"
+        type="text"
+        placeholder="Search YouTube, or paste a video URL..."
+        required
       />
-      <button id="connect-btn">Connect</button>
-      <p id="setup-error" class="error" hidden></p>
-    </div>
-  </div>
+      <button type="submit" id="search-btn">Go</button>
+    </form>
 
-  <div id="app-screen" class="screen" hidden>
-    <div class="topbar">
-      <span id="server-label"></span>
-      <button id="change-server-btn" class="link-btn">Change server</button>
-    </div>
-    <iframe id="app-frame" title="Video Downloader"></iframe>
-  </div>
+    <p id="status" class="status" hidden></p>
 
+    <div id="results-grid" class="results-grid" hidden></div>
+
+    <section id="player-section" class="player-section" hidden>
+      <div class="player-wrap">
+        <iframe
+          id="player-frame"
+          title="Video player"
+          allow="autoplay; encrypted-media; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </section>
+
+    <section id="result" class="result" hidden>
+      <div class="video-card">
+        <img id="thumbnail" alt="thumbnail" />
+        <div class="video-meta">
+          <h2 id="title"></h2>
+          <p id="uploader"></p>
+          <p id="duration"></p>
+        </div>
+      </div>
+
+      <div class="options">
+        <label>
+          Format
+          <select id="format-select"></select>
+        </label>
+        <label id="resolution-label">
+          Resolution
+          <select id="resolution-select"></select>
+        </label>
+        <button id="download-btn" type="button">Download</button>
+      </div>
+      <p id="download-status" class="status" hidden></p>
+    </section>
+  </main>
   <script src="app.js"></script>
 </body>
 </html>
