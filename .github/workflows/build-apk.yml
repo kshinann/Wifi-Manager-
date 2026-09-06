@@ -2,6 +2,12 @@ name: Build debug APKs
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - claude/video-download-app-yu5tlt
+    paths:
+      - .github/workflows/build-apk.yml
+      - mobile/**
 
 jobs:
   native-app:
