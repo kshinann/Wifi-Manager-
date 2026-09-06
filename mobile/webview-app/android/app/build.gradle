@@ -22,6 +22,10 @@ android {
             abiFilters "arm64-v8a", "armeabi-v7a"
         }
         python {
+            // Must match a Python interpreter actually available on the
+            // build machine (see actions/setup-python in the CI workflow) —
+            // Chaquopy runs pip with it before bundling for Android.
+            version "3.11"
             pip {
                 install "yt-dlp"
             }
