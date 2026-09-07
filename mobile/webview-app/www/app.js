@@ -130,10 +130,15 @@ async function loadVideo(url) {
     durationEl.textContent = formatDuration(data.duration);
     thumbnailEl.src = data.thumbnail || "";
 
+    // When separate video+audio streams can't be merged (no ffmpeg — see
+    // the embedded on-device server), only offer resolutions that already
+    // come as a single combined stream; otherwise any video-having stream
+    // is fair game since it can be merged with the best audio track.
+    const canMerge = data.can_merge !== false;
     availableHeights = [
       ...new Set(
         (data.formats || [])
-          .filter((f) => f.has_video && f.height)
+          .filter((f) => f.has_video && f.height && (canMerge || f.has_audio))
           .map((f) => f.height)
       ),
     ].sort((a, b) => b - a);

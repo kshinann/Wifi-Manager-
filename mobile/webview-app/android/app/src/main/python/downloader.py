@@ -112,6 +112,10 @@ def fetch_info(url: str) -> dict:
         "webpage_url": info.get("webpage_url"),
         "extractor": info.get("extractor"),
         "formats": formats,
+        # No ffmpeg here means separate video+audio streams can't be merged,
+        # so the frontend must only offer resolutions that already come as a
+        # single combined stream — see download_media's no-ffmpeg fallback.
+        "can_merge": bool(FFMPEG_LOCATION),
     }
 
 

@@ -96,6 +96,9 @@ def fetch_info(url: str) -> dict:
         "webpage_url": info.get("webpage_url"),
         "extractor": info.get("extractor"),
         "formats": formats,
+        # ffmpeg is a hard requirement here (see README), so separate
+        # video+audio streams can always be merged.
+        "can_merge": True,
     }
 
 
