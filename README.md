@@ -15,7 +15,8 @@ recommendations for improving it.
 - **Speed test** — measures latency/jitter/packet loss (to both the internet
   and the local router, so you can tell whether a problem is local Wi-Fi
   interference or an upstream ISP issue) and download/upload throughput.
-  Results are kept in a local history.
+  Results are kept in a local history, with a download/upload trend chart
+  once there are at least two runs to compare.
 - **Recommendations** — a full, categorized list of actionable advice (move
   closer to the router, switch to WPA2/WPA3, change the router's channel,
   switch band, etc.), each derived from a specific rule against the data

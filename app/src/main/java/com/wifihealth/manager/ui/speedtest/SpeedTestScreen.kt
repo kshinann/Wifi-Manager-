@@ -31,6 +31,7 @@ import com.wifihealth.manager.data.model.SpeedTestResult
 import com.wifihealth.manager.data.model.SpeedTestStage
 import com.wifihealth.manager.di.appContainer
 import com.wifihealth.manager.ui.components.SectionCard
+import com.wifihealth.manager.ui.components.SpeedTrendChart
 import com.wifihealth.manager.util.FormatUtils
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -72,6 +73,14 @@ fun SpeedTestScreen() {
 
             latestResult?.let { result ->
                 item { ResultCard(result) }
+            }
+
+            if (history.size >= 2) {
+                item {
+                    SectionCard(title = "Trend") {
+                        SpeedTrendChart(results = history)
+                    }
+                }
             }
 
             if (history.isNotEmpty()) {
