@@ -82,6 +82,7 @@ to unit test without an emulator.
 | `ACCESS_NETWORK_STATE` | Observe the active network via `ConnectivityManager` |
 | `INTERNET` | Speed test download/upload |
 | `ACCESS_FINE_LOCATION` (API < 33) / `NEARBY_WIFI_DEVICES` (API ≥ 33) | Android treats nearby SSIDs/BSSIDs as location-derived data; one of these is required at runtime to read scan results and the connected SSID. The app requests only the one relevant to the device's API level. |
+| `POST_NOTIFICATIONS` (API ≥ 33) | Only requested if you turn on "Unrecognized-device alerts" in the Devices tab; never requested otherwise. |
 
 No location is ever read or transmitted — the permission is Android's gate
 for reading Wi-Fi metadata, not something this app uses for positioning.
@@ -141,6 +142,13 @@ without root or router access can actually deliver:
   about, cross-check it against your router's own admin page.
 
 In short: treat a flagged device as a prompt to go look, not a verdict.
+
+**Alerts are opt-in.** The Devices tab has an "Unrecognized-device alerts"
+toggle (off by default) that posts a local notification whenever a scan
+finds a device outside the known-devices list. It's off unless you turn it
+on, and on Android 13+ turning it on also prompts for the POST_NOTIFICATIONS
+runtime permission -- nothing is ever pushed without both. This only fires
+when you tap "Scan network" yourself; there's no background/periodic scan.
 
 ## Building
 

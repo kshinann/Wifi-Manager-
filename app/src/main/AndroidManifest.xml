@@ -8,6 +8,9 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
 
+    <!-- Only requested at runtime if the user turns on unrecognized-device alerts. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!--
         Scan results (SSID/BSSID of nearby networks) are treated as
         location-sensitive data by the platform.

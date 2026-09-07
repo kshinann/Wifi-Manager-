@@ -5,8 +5,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.wifihealth.manager.data.lan.DeviceAlertNotifier
+import com.wifihealth.manager.data.lan.DeviceAlertPreferences
 import com.wifihealth.manager.data.lan.KnownDeviceStore
 import com.wifihealth.manager.data.lan.LanDeviceScanner
+import com.wifihealth.manager.data.lan.unrecognizedDevices
 import com.wifihealth.manager.data.model.ConnectionSnapshot
 import com.wifihealth.manager.data.model.DiscoveredDevice
 import com.wifihealth.manager.data.model.KnownDevice
@@ -23,6 +26,8 @@ class DevicesViewModel(
     private val connectionState: StateFlow<ConnectionSnapshot>,
     private val scanner: LanDeviceScanner,
     private val knownDeviceStore: KnownDeviceStore,
+    private val alertPreferences: DeviceAlertPreferences,
+    private val alertNotifier: DeviceAlertNotifier,
 ) : ViewModel() {
 
     private val _scanState = MutableStateFlow(LanScanState.IDLE)
@@ -36,6 +41,13 @@ class DevicesViewModel(
 
     val knownDevices: StateFlow<List<KnownDevice>> = knownDeviceStore.knownDevices
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val alertsEnabled: StateFlow<Boolean> = alertPreferences.enabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    fun setAlertsEnabled(enabled: Boolean) {
+        viewModelScope.launch { alertPreferences.setEnabled(enabled) }
+    }
 
     fun scanNetwork() {
         if (_scanState.value == LanScanState.SCANNING) return
@@ -51,6 +63,14 @@ class DevicesViewModel(
             }
             _scanResult.value = result
             _scanState.value = LanScanState.DONE
+
+            if (alertsEnabled.value) {
+                val knownIps = knownDevices.value.map { it.ipAddress }.toSet()
+                val unrecognized = result.devices.unrecognizedDevices(knownIps)
+                if (unrecognized.isNotEmpty()) {
+                    alertNotifier.notifyUnrecognized(unrecognized)
+                }
+            }
         }
     }
 
@@ -69,6 +89,8 @@ class DevicesViewModel(
                     connectionState = container.connectionState,
                     scanner = container.lanDeviceScanner,
                     knownDeviceStore = container.knownDeviceStore,
+                    alertPreferences = container.deviceAlertPreferences,
+                    alertNotifier = container.deviceAlertNotifier,
                 )
             }
         }

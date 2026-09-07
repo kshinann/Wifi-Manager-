@@ -1,6 +1,8 @@
 package com.wifihealth.manager.di
 
 import android.content.Context
+import com.wifihealth.manager.data.lan.DeviceAlertNotifier
+import com.wifihealth.manager.data.lan.DeviceAlertPreferences
 import com.wifihealth.manager.data.lan.KnownDeviceStore
 import com.wifihealth.manager.data.lan.LanDeviceScanner
 import com.wifihealth.manager.data.model.ConnectionSnapshot
@@ -35,6 +37,8 @@ class AppContainer(context: Context) {
     val speedTestHistoryStore = SpeedTestHistoryStore(context)
     val lanDeviceScanner = LanDeviceScanner()
     val knownDeviceStore = KnownDeviceStore(context)
+    val deviceAlertPreferences = DeviceAlertPreferences(context)
+    val deviceAlertNotifier = DeviceAlertNotifier(context)
 
     val connectionState: StateFlow<ConnectionSnapshot> = connectionMonitor.connectionFlow()
         .stateIn(applicationScope, SharingStarted.WhileSubscribed(5_000), ConnectionSnapshot.EMPTY)
