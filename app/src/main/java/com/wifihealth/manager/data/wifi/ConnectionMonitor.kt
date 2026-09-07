@@ -122,7 +122,7 @@ class ConnectionMonitor(context: Context) {
             WifiInfo.SECURITY_TYPE_WEP -> SecurityType.WEP
             WifiInfo.SECURITY_TYPE_PSK -> SecurityType.WPA2
             WifiInfo.SECURITY_TYPE_SAE -> SecurityType.WPA3
-            WifiInfo.SECURITY_TYPE_OWE -> SecurityType.WPA3
+            WifiInfo.SECURITY_TYPE_OWE -> SecurityType.ENHANCED_OPEN
             WifiInfo.SECURITY_TYPE_EAP,
             WifiInfo.SECURITY_TYPE_EAP_WPA3_ENTERPRISE,
             WifiInfo.SECURITY_TYPE_EAP_WPA3_ENTERPRISE_192_BIT -> SecurityType.ENTERPRISE

@@ -61,6 +61,7 @@ class RecommendationEngineTest {
 
     private fun speedTest(
         downloadMbps: Double? = 300.0,
+        uploadMbps: Double? = 50.0,
         latencyMs: Double? = 10.0,
         jitterMs: Double? = 2.0,
         packetLossPercent: Double? = 0.0,
@@ -69,7 +70,7 @@ class RecommendationEngineTest {
         timestampEpochMillis = 0,
         ssid = "HomeNet",
         downloadMbps = downloadMbps,
-        uploadMbps = 50.0,
+        uploadMbps = uploadMbps,
         latencyMs = latencyMs,
         jitterMs = jitterMs,
         packetLossPercent = packetLossPercent,
@@ -129,6 +130,22 @@ class RecommendationEngineTest {
         assertTrue(report.recommendations.any { it.category == RecommendationCategory.SECURITY && it.severity == Severity.GOOD })
     }
 
+    @Test fun `enhanced open (OWE) gets a distinct warning, not full WPA3 credit`() {
+        val report = RecommendationEngine.evaluate(
+            connection = connection(security = SecurityType.ENHANCED_OPEN),
+            nearbyNetworks = emptyList(),
+            speedTest = null,
+        )
+        assertEquals(4, report.healthScore.securityScore)
+        assertTrue(
+            report.recommendations.any {
+                it.category == RecommendationCategory.SECURITY &&
+                    it.severity == Severity.WARNING &&
+                    it.title.contains("Enhanced Open")
+            },
+        )
+    }
+
     // ---- overall score --------------------------------------------------------------
 
     @Test fun `overall score is scaled to 100 when there is no speed test`() {
@@ -154,6 +171,19 @@ class RecommendationEngineTest {
     }
 
     // ---- congestion / channel suggestion --------------------------------------------------------------
+
+    @Test fun `connected AP's own scan entry does not count as congestion against itself`() {
+        // Scan results normally include the AP this device is associated with -- same bssid as
+        // connection()'s default -- so on an otherwise-clear channel this must not knock the
+        // congestion score down just because the connected AP "sees" itself.
+        val ownScanEntry = network("HomeNet", "AA:BB:CC:00:00:01", rssiDbm = -30, band = Band.GHZ_2_4, channel = 6)
+        val report = RecommendationEngine.evaluate(
+            connection = connection(band = Band.GHZ_2_4, channel = 6),
+            nearbyNetworks = listOf(ownScanEntry),
+            speedTest = null,
+        )
+        assertEquals(20, report.healthScore.congestionScore)
+    }
 
     @Test fun `congested channel with a clearly better option is flagged`() {
         val crowded = listOf(
@@ -220,6 +250,16 @@ class RecommendationEngineTest {
             speedTest = speedTest(packetLossPercent = 8.0),
         )
         assertTrue(report.recommendations.any { it.category == RecommendationCategory.PERFORMANCE && it.severity == Severity.CRITICAL })
+    }
+
+    @Test fun `failed throughput measurement is flagged instead of reported healthy`() {
+        val report = RecommendationEngine.evaluate(
+            connection = connection(),
+            nearbyNetworks = emptyList(),
+            speedTest = speedTest(downloadMbps = null, uploadMbps = null),
+        )
+        assertTrue(report.recommendations.any { it.title == "Throughput measurement failed" })
+        assertTrue(report.recommendations.none { it.title == "Performance looks healthy" })
     }
 
     @Test fun `throughput far below link rate is flagged`() {

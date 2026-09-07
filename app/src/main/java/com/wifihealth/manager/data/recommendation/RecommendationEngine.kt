@@ -26,6 +26,10 @@ object RecommendationEngine {
         speedTest: SpeedTestResult?,
     ): NetworkHealthReport {
         val recommendations = mutableListOf<Recommendation>()
+        // Scan results normally include the AP this device is connected to, so exclude it
+        // before scoring congestion -- otherwise the connected AP counts as interference
+        // against itself.
+        val otherNetworks = nearbyNetworks.filterNot { it.bssid == connection.bssid }
 
         val signalScore = signalScore(connection.rssiDbm)
         recommendations += signalRecommendation(connection.rssiDbm)
@@ -33,10 +37,10 @@ object RecommendationEngine {
         val securityScore = securityScore(connection.security)
         recommendations += securityRecommendation(connection.security)
 
-        val congestionScore = congestionScore(connection, nearbyNetworks)
-        recommendationsForCongestion(connection, nearbyNetworks)?.let { recommendations += it }
+        val congestionScore = congestionScore(connection, otherNetworks)
+        recommendationsForCongestion(connection, otherNetworks)?.let { recommendations += it }
 
-        bandRecommendation(connection, nearbyNetworks)?.let { recommendations += it }
+        bandRecommendation(connection, otherNetworks)?.let { recommendations += it }
 
         val performanceScore = speedTest?.let { performanceScore(it, connection) }
         if (speedTest != null) {
@@ -117,6 +121,7 @@ object RecommendationEngine {
         SecurityType.WPA3, SecurityType.ENTERPRISE -> 20
         SecurityType.WPA2 -> 16
         SecurityType.WPA -> 8
+        SecurityType.ENHANCED_OPEN -> 4
         SecurityType.WEP -> 2
         SecurityType.OPEN -> 0
         SecurityType.UNKNOWN -> 10
@@ -137,6 +142,13 @@ object RecommendationEngine {
             RecommendationCategory.SECURITY, Severity.WARNING,
             "Using legacy WPA (TKIP)",
             "WPA/TKIP is outdated and limits throughput. Upgrade the router to WPA2 or WPA3 for better security and speed.",
+        )
+        SecurityType.ENHANCED_OPEN -> Recommendation(
+            RecommendationCategory.SECURITY, Severity.WARNING,
+            "No password required (Enhanced Open / OWE)",
+            "Anyone can join without a password, though OWE still encrypts traffic between this device and the router " +
+                "-- unlike a fully open network, other devices on the same network can't easily read your traffic. " +
+                "Avoid this network for anything sensitive if you don't know who runs it.",
         )
         SecurityType.WPA2 -> Recommendation(
             RecommendationCategory.SECURITY, Severity.INFO,
@@ -175,9 +187,7 @@ object RecommendationEngine {
         val band = connection.band
         if (band != Band.GHZ_2_4 && band != Band.GHZ_5) return null
 
-        val competingApCount = networks.count {
-            it.band == band && it.bssid != connection.bssid && it.channel == channel
-        }
+        val competingApCount = networks.count { it.band == band && it.channel == channel }
         val suggestion = ChannelAnalyzer.suggestBetterChannel(channel, band, networks)
 
         return when {
@@ -317,6 +327,15 @@ object RecommendationEngine {
                     "The local hop is fast, but overall latency is much higher — this points to the ISP or internet path rather than your Wi-Fi setup.",
                 )
             }
+        }
+
+        if (result.downloadMbps == null && result.uploadMbps == null) {
+            recs += Recommendation(
+                RecommendationCategory.PERFORMANCE, Severity.WARNING,
+                "Throughput measurement failed",
+                "Couldn't get a download/upload reading this time -- the connection may have dropped mid-test, or " +
+                    "the test server was unreachable. Try running the speed test again.",
+            )
         }
 
         if (recs.isEmpty()) {

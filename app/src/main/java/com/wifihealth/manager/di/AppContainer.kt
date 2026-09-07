@@ -49,7 +49,14 @@ class AppContainer(context: Context) {
     init {
         applicationScope.launch {
             while (true) {
-                wifiScanner.requestScan()
+                // Guard against an OEM/firmware startScan() quirk taking down the whole app --
+                // this loop runs for the entire process lifetime, so any uncaught exception
+                // here would otherwise crash it with nothing the user did to cause it.
+                try {
+                    wifiScanner.requestScan()
+                } catch (e: Exception) {
+                    // Skip this round; the next scheduled scan will retry.
+                }
                 delay(SCAN_INTERVAL_MS)
             }
         }

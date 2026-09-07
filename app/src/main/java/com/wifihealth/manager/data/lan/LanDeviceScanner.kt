@@ -45,17 +45,20 @@ class LanDeviceScanner {
         val discovered = coroutineScope {
             plan.addresses.map { ip ->
                 async {
-                    semaphore.withPermit {
-                        val alive = ip == ownIpAddress || probeHost(ip)
+                    // Reverse DNS runs outside the permit: it has no explicit timeout and
+                    // shouldn't hold a probe slot hostage while the rest of the sweep waits.
+                    val alive = semaphore.withPermit {
+                        val result = ip == ownIpAddress || probeHost(ip)
                         val progress = scannedCount.incrementAndGet()
                         onProgress(progress, plan.addresses.size)
-                        if (!alive) return@withPermit null
-                        DiscoveredDevice(
-                            ipAddress = ip,
-                            hostname = if (ip == ownIpAddress) null else resolveHostname(ip),
-                            isThisDevice = ip == ownIpAddress,
-                        )
+                        result
                     }
+                    if (!alive) return@async null
+                    DiscoveredDevice(
+                        ipAddress = ip,
+                        hostname = if (ip == ownIpAddress) null else resolveHostname(ip),
+                        isThisDevice = ip == ownIpAddress,
+                    )
                 }
             }.awaitAll().filterNotNull()
         }
