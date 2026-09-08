@@ -233,20 +233,23 @@ def save_to_downloads(file_path: str, mime_type: str) -> str:
     if ANDROID_CONTEXT is None:
         raise RuntimeError("downloader.configure() was not called with an Android context")
 
-    from java import cast, jclass
+    from java import jclass
 
     content_values_cls = jclass("android.content.ContentValues")
     media_store_downloads = jclass("android.provider.MediaStore$Downloads")
+    integer_cls = jclass("java.lang.Integer")
 
     filename = os.path.basename(file_path)
 
     # ContentValues.put has six overloads for numeric types (Byte/Double/
-    # Float/Integer/Long/Short); a plain Python int is ambiguous to Chaquopy
-    # without an explicit cast telling it which one to call.
+    # Float/Integer/Long/Short); a plain Python int is ambiguous to Chaquopy.
+    # Boxing it as a java.lang.Integer resolves to that overload exactly,
+    # unlike cast("int", ...), which Chaquopy rejects ("Invalid JNI
+    # signature") since that's not a valid JNI type descriptor.
     values = content_values_cls()
     values.put("_display_name", filename)
     values.put("mime_type", mime_type)
-    values.put("is_pending", cast("int", 1))
+    values.put("is_pending", integer_cls(1))
 
     resolver = ANDROID_CONTEXT.getContentResolver()
     uri = resolver.insert(media_store_downloads.EXTERNAL_CONTENT_URI, values)
@@ -265,7 +268,7 @@ def save_to_downloads(file_path: str, mime_type: str) -> str:
         out_stream.close()
 
     done_values = content_values_cls()
-    done_values.put("is_pending", cast("int", 0))
+    done_values.put("is_pending", integer_cls(0))
     resolver.update(uri, done_values, None, None)
 
     return filename
