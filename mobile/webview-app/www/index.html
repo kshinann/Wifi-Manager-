@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Video Downloader</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <h1>Video Downloader</h1>
+    <p class="subtitle">Search YouTube, or paste a link from any supported site.</p>
+
+    <form id="search-form" class="url-form">
+      <input
+        id="search-input"
+        type="text"
+        placeholder="Search YouTube, or paste a video URL..."
+        required
+      />
+      <button type="submit" id="search-btn">Go</button>
+    </form>
+
+    <p id="status" class="status" hidden></p>
+
+    <div id="results-grid" class="results-grid" hidden></div>
+
+    <section id="player-section" class="player-section" hidden>
+      <div class="player-wrap">
+        <iframe
+          id="player-frame"
+          title="Video player"
+          allow="autoplay; encrypted-media; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </section>
+
+    <section id="result" class="result" hidden>
+      <div class="video-card">
+        <img id="thumbnail" alt="thumbnail" />
+        <div class="video-meta">
+          <h2 id="title"></h2>
+          <p id="uploader"></p>
+          <p id="duration"></p>
+        </div>
+      </div>
+
+      <div class="options">
+        <label>
+          Format
+          <select id="format-select"></select>
+        </label>
+        <label id="resolution-label">
+          Resolution
+          <select id="resolution-select"></select>
+        </label>
+        <button id="download-btn" type="button">Download</button>
+      </div>
+      <p id="download-status" class="status" hidden></p>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
