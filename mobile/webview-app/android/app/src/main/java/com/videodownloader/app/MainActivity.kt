@@ -28,20 +28,13 @@ class MainActivity : BridgeActivity() {
             Python.start(AndroidPlatform(this))
         }
         val downloadRoot = File(cacheDir, "downloads").absolutePath
-        val ffmpegPath = findBundledFfmpeg()
         val appContext = applicationContext
 
         thread(name = "video-downloader-server") {
             val py = Python.getInstance()
-            py.getModule("downloader").callAttr("configure", downloadRoot, ffmpegPath, appContext)
+            py.getModule("downloader").callAttr("configure", downloadRoot, appContext)
             py.getModule("local_server").callAttr("start", SERVER_PORT)
         }
-    }
-
-    /** Looks for a bundled ffmpeg binary shipped as a native library (see mobile/README.md). */
-    private fun findBundledFfmpeg(): String? {
-        val candidate = File(applicationInfo.nativeLibraryDir, "libffmpeg.so")
-        return if (candidate.exists()) candidate.absolutePath else null
     }
 
     companion object {

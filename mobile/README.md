@@ -20,6 +20,11 @@ Android process), so there's nothing to deploy separately:
   (deliberately not FastAPI/uvicorn/pydantic, which pull in compiled
   extensions Chaquopy may not have Android wheels for) exposing the same
   `/api/search`, `/api/info`, `/api/download` routes on `127.0.0.1:8765`.
+- `MediaMerger.kt` — merges/transcodes yt-dlp's raw output using Android's
+  own **Media3 Transformer** instead of ffmpeg (there's no ffmpeg binary
+  bundled — see the limitation below). `downloader.py` downloads video and
+  audio as separate raw streams, then calls into this via Chaquopy's Java
+  interop to mux them into the final file.
 - `MainActivity.kt` starts Python and the local server as soon as the app
   launches.
 - `www/` is the *same* `frontend/index.html` + `app.js` + `style.css` from
@@ -41,16 +46,30 @@ cd android
 # APK at app/build/outputs/apk/debug/app-debug.apk
 ```
 
-**Known limitation: no bundled ffmpeg yet.** yt-dlp needs ffmpeg to merge
-separate video+audio streams and to convert/extract formats. Sourcing a
-legitimate prebuilt ffmpeg binary for Android (or wiring up something like
-ffmpeg-kit) wasn't done here — `downloader.py` detects ffmpeg is absent and
-falls back to picking an already-merged stream instead of merging/
-converting, so downloads still work, just capped to whatever
-pre-merged/progressive streams the site offers (typically up to 720p on
-YouTube) with no format conversion. If you want full parity with the
-desktop backend (any format, any resolution), bundling ffmpeg for Android
-is the next piece to add.
+**No ffmpeg on-device — uses Media3 Transformer instead, and that narrows
+the format list.** A prebuilt ffmpeg-for-Android binary wasn't available to
+bundle (ffmpeg-kit, the usual choice, had its published artifacts pulled
+from Maven Central), so merging/converting is done with Android's own
+`androidx.media3:media3-transformer` library, which is hardware-accelerated
+and needs no external binary. Two real platform limits shape what's
+offered on-device, vs. the desktop backend's full format list:
+
+- Android's `MediaMuxer` (which Media3's default muxer wraps) only writes
+  **MP4** and **WEBM** containers — not MKV/MOV.
+- MediaCodec audio *encoders* are only guaranteed present on every device
+  for **AAC** — MP3/FLAC/Opus encoder availability varies by vendor.
+
+So `webview-app` offers `mp4`/`webm` for video and `m4a` (AAC) for
+audio-only; `frontend/app.js` picks the narrower list automatically when
+running inside the app (`window.Capacitor` detection), while the desktop
+backend keeps its full list unchanged.
+
+**This is genuinely untested end-to-end.** There's no Android emulator or
+device available in this dev environment, so while the code compiles
+against the Media3 Transformer API as best-recalled, only a real device run
+can confirm the merge/transcode step actually produces correct output — if
+something's off, the Media3 API surface (`MediaMerger.kt`) is the first
+place to check.
 
 ## native-app — needs a separate backend server
 

@@ -67,10 +67,6 @@ class Handler(BaseHTTPRequestHandler):
             payload.get("format_id"),
         )
         try:
-            # Use the actual downloaded file's extension, not the requested
-            # format: without ffmpeg, no conversion happens, so a requested
-            # "mp3" can come back as the source stream's real container
-            # (e.g. .webm/.m4a) — tag MediaStore with what it actually is.
             actual_ext = os.path.splitext(file_path)[1].lstrip(".")
             mime_type = downloader.mime_type_for(actual_ext)
             saved_as = downloader.save_to_downloads(file_path, mime_type)

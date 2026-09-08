@@ -1,11 +1,13 @@
-const VIDEO_FORMATS = ["mp4", "webm", "mkv", "mov"];
-const AUDIO_FORMATS = ["mp3", "m4a", "wav", "aac", "opus", "flac"];
-const URL_PATTERN = /^https?:\/\//i;
-
 // Inside the Android app, the backend runs in-process on 127.0.0.1 instead
-// of a real server (see mobile/README.md) — everything else is identical.
+// of a real server (see mobile/README.md) — everything else is identical,
+// except the format list: Android's MediaMuxer only writes MP4/WEBM, and
+// AAC is the only audio encoder guaranteed on every device, so the embedded
+// server supports a narrower set of output formats than the desktop one.
 const IS_EMBEDDED_APP = typeof window.Capacitor !== "undefined";
 const API_BASE = IS_EMBEDDED_APP ? "http://127.0.0.1:8765" : "";
+const VIDEO_FORMATS = IS_EMBEDDED_APP ? ["mp4", "webm"] : ["mp4", "webm", "mkv", "mov"];
+const AUDIO_FORMATS = IS_EMBEDDED_APP ? ["m4a"] : ["mp3", "m4a", "wav", "aac", "opus", "flac"];
+const URL_PATTERN = /^https?:\/\//i;
 
 const searchForm = document.getElementById("search-form");
 const searchInput = document.getElementById("search-input");

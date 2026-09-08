@@ -3,8 +3,14 @@ Android app process via Chaquopy instead of as a separate server.
 
 Differences from the desktop version:
 - `configure()` must be called once (from Kotlin) before anything else, to
-  provide a writable download directory, an optional ffmpeg command, and the
-  Android Context needed to save finished files into the Downloads folder.
+  provide a writable download directory and the Android Context needed to
+  save finished files into the Downloads folder.
+- No ffmpeg on-device. yt-dlp downloads video and audio as separate raw
+  files, and MediaMerger.kt (Media3 Transformer, via Chaquopy's Java
+  interop) muxes/transcodes them into the final file instead.
+- Because of that, the supported output formats are narrower than the
+  desktop backend's: Android's MediaMuxer only writes MP4/WEBM containers,
+  and AAC is the only audio encoder guaranteed present on every device.
 - Finished downloads are saved directly to MediaStore Downloads via the
   Android Context (see `save_to_downloads`) rather than streamed back over
   HTTP for the browser to save, since saving a blob: download from inside an
@@ -12,25 +18,25 @@ Differences from the desktop version:
 """
 
 import os
+import re
 import shutil
 import uuid
 from typing import Optional
 
 import yt_dlp
 
-AUDIO_ONLY_FORMATS = {"mp3", "m4a", "wav", "aac", "opus", "flac"}
-VIDEO_CONTAINERS = {"mp4", "mkv", "webm", "mov"}
+# Narrower than the desktop backend's — see module docstring.
+AUDIO_ONLY_FORMATS = {"m4a"}
+VIDEO_CONTAINERS = {"mp4", "webm"}
 
 DOWNLOAD_ROOT: Optional[str] = None
-FFMPEG_LOCATION: Optional[str] = None
 ANDROID_CONTEXT = None
 
 
-def configure(download_root: str, ffmpeg_location: Optional[str], android_context) -> None:
-    global DOWNLOAD_ROOT, FFMPEG_LOCATION, ANDROID_CONTEXT
+def configure(download_root: str, android_context) -> None:
+    global DOWNLOAD_ROOT, ANDROID_CONTEXT
     DOWNLOAD_ROOT = download_root
     os.makedirs(DOWNLOAD_ROOT, exist_ok=True)
-    FFMPEG_LOCATION = ffmpeg_location
     ANDROID_CONTEXT = android_context
 
 
@@ -112,11 +118,40 @@ def fetch_info(url: str) -> dict:
         "webpage_url": info.get("webpage_url"),
         "extractor": info.get("extractor"),
         "formats": formats,
-        # No ffmpeg here means separate video+audio streams can't be merged,
-        # so the frontend must only offer resolutions that already come as a
-        # single combined stream — see download_media's no-ffmpeg fallback.
-        "can_merge": bool(FFMPEG_LOCATION),
+        # Media3 Transformer can always merge separate video+audio streams
+        # on-device, so every resolution is fair game (unlike the old
+        # no-ffmpeg fallback, which could only offer pre-merged streams).
+        "can_merge": True,
     }
+
+
+def _download_raw(url: str, format_selector: str, job_dir: str, basename: str) -> str:
+    """Downloads a single yt-dlp format (no merging/postprocessing) to
+    job_dir/basename.<ext>, and returns the resulting path."""
+    outtmpl = os.path.join(job_dir, f"{basename}.%(ext)s")
+    ydl_opts = {
+        "quiet": True,
+        "no_warnings": True,
+        "noplaylist": True,
+        "outtmpl": outtmpl,
+        "format": format_selector,
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+
+    matches = [
+        f
+        for f in os.listdir(job_dir)
+        if f.startswith(f"{basename}.") and not f.endswith((".part", ".ytdl"))
+    ]
+    if not matches:
+        raise RuntimeError(f"Download failed for format '{format_selector}'")
+    return os.path.join(job_dir, matches[0])
+
+
+def _safe_filename(title: Optional[str], ext: str) -> str:
+    name = re.sub(r'[\\/:*?"<>|]+', "_", (title or "download")).strip()
+    return f"{(name[:150] or 'download')}.{ext}"
 
 
 def download_media(
@@ -133,61 +168,46 @@ def download_media(
 
     job_dir = os.path.join(DOWNLOAD_ROOT, uuid.uuid4().hex)
     os.makedirs(job_dir, exist_ok=True)
-    outtmpl = os.path.join(job_dir, "%(title).200B.%(ext)s")
 
     is_audio_only = output_format in AUDIO_ONLY_FORMATS
-    has_ffmpeg = bool(FFMPEG_LOCATION)
-
-    ydl_opts = {
-        "quiet": True,
-        "no_warnings": True,
-        "noplaylist": True,
-        "outtmpl": outtmpl,
-        "postprocessors": [],
-    }
-    if FFMPEG_LOCATION:
-        ydl_opts["ffmpeg_location"] = FFMPEG_LOCATION
-
-    if format_id:
-        ydl_opts["format"] = format_id
-    elif is_audio_only:
-        ydl_opts["format"] = "bestaudio/best"
-    elif not has_ffmpeg:
-        # No ffmpeg on this device: pick a single stream that already has
-        # both video and audio, since merging separate streams needs ffmpeg.
-        cap = f"[height<={height}]" if height else ""
-        ydl_opts["format"] = f"best{cap}[vcodec!=none][acodec!=none]/best{cap}"
-    elif height:
-        ydl_opts["format"] = f"bestvideo[height<={height}]+bestaudio/best[height<={height}]"
-    else:
-        ydl_opts["format"] = "bestvideo+bestaudio/best"
-
-    if has_ffmpeg:
-        if is_audio_only:
-            ydl_opts["postprocessors"].append(
-                {"key": "FFmpegExtractAudio", "preferredcodec": output_format}
-            )
-        else:
-            ydl_opts["merge_output_format"] = output_format
-            ydl_opts["postprocessors"].append(
-                {"key": "FFmpegVideoConvertor", "preferedformat": output_format}
-            )
 
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
+        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True, "noplaylist": True}) as ydl:
+            title = ydl.extract_info(url, download=False, process=False).get("title")
+
+        video_raw: Optional[str] = None
+        audio_raw: Optional[str] = None
+
+        if format_id:
+            # An exact source format was requested — download it as-is and
+            # let MediaMerger remux/transcode whatever tracks it contains
+            # (video+audio, video-only, or audio-only).
+            raw = _download_raw(url, format_id, job_dir, "raw_source")
+            if is_audio_only:
+                audio_raw = raw
+            else:
+                video_raw = raw
+        elif is_audio_only:
+            audio_raw = _download_raw(url, "bestaudio/best", job_dir, "raw_audio")
+        else:
+            cap = f"[height<={height}]" if height else ""
+            video_raw = _download_raw(url, f"bestvideo{cap}/best{cap}", job_dir, "raw_video")
+            audio_raw = _download_raw(url, "bestaudio/best", job_dir, "raw_audio")
+
+        output_path = os.path.join(job_dir, _safe_filename(title, output_format))
+
+        from java import jclass
+
+        jclass("com.videodownloader.app.MediaMerger").merge(
+            ANDROID_CONTEXT, video_raw, audio_raw, output_path
+        )
+
+        if not os.path.exists(output_path):
+            raise RuntimeError("Merge failed: no output file produced")
+        return output_path
     except Exception:
         shutil.rmtree(job_dir, ignore_errors=True)
         raise
-
-    files = [f for f in os.listdir(job_dir) if not f.endswith((".part", ".ytdl"))]
-    if not files:
-        shutil.rmtree(job_dir, ignore_errors=True)
-        raise RuntimeError("Download failed: no output file produced")
-
-    matching = [f for f in files if f.lower().endswith(f".{output_format}")]
-    chosen = matching[0] if matching else files[0]
-    return os.path.join(job_dir, chosen)
 
 
 def cleanup_job(file_path: str) -> None:
@@ -199,14 +219,7 @@ def cleanup_job(file_path: str) -> None:
 _MIME_TYPES = {
     "mp4": "video/mp4",
     "webm": "video/webm",
-    "mkv": "video/x-matroska",
-    "mov": "video/quicktime",
-    "mp3": "audio/mpeg",
     "m4a": "audio/mp4",
-    "wav": "audio/wav",
-    "aac": "audio/aac",
-    "opus": "audio/opus",
-    "flac": "audio/flac",
 }
 
 
