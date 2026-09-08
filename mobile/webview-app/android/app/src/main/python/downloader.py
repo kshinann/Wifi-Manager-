@@ -125,9 +125,9 @@ def fetch_info(url: str) -> dict:
     }
 
 
-def _download_raw(url: str, format_selector: str, job_dir: str, basename: str) -> str:
+def _download_raw(url: str, format_selector: str, job_dir: str, basename: str) -> tuple:
     """Downloads a single yt-dlp format (no merging/postprocessing) to
-    job_dir/basename.<ext>, and returns the resulting path."""
+    job_dir/basename.<ext>. Returns (path, resolved yt-dlp info dict)."""
     outtmpl = os.path.join(job_dir, f"{basename}.%(ext)s")
     ydl_opts = {
         "quiet": True,
@@ -137,7 +137,7 @@ def _download_raw(url: str, format_selector: str, job_dir: str, basename: str) -
         "format": format_selector,
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
+        info = ydl.extract_info(url, download=True)
 
     matches = [
         f
@@ -146,12 +146,13 @@ def _download_raw(url: str, format_selector: str, job_dir: str, basename: str) -
     ]
     if not matches:
         raise RuntimeError(f"Download failed for format '{format_selector}'")
-    return os.path.join(job_dir, matches[0])
+    return os.path.join(job_dir, matches[0]), info
 
 
-def _safe_filename(title: Optional[str], ext: str) -> str:
+def _safe_filename(title: Optional[str], ext: str, height: Optional[int] = None) -> str:
     name = re.sub(r'[\\/:*?"<>|]+', "_", (title or "download")).strip()
-    return f"{(name[:150] or 'download')}.{ext}"
+    suffix = f" [{height}p]" if height else ""
+    return f"{(name[:150] or 'download')}{suffix}.{ext}"
 
 
 def download_media(
@@ -177,24 +178,29 @@ def download_media(
 
         video_raw: Optional[str] = None
         audio_raw: Optional[str] = None
+        resolved_height: Optional[int] = None
 
         if format_id:
             # An exact source format was requested — download it as-is and
             # let MediaMerger remux/transcode whatever tracks it contains
             # (video+audio, video-only, or audio-only).
-            raw = _download_raw(url, format_id, job_dir, "raw_source")
+            raw, info = _download_raw(url, format_id, job_dir, "raw_source")
             if is_audio_only:
                 audio_raw = raw
             else:
                 video_raw = raw
+                resolved_height = info.get("height")
         elif is_audio_only:
-            audio_raw = _download_raw(url, "bestaudio/best", job_dir, "raw_audio")
+            audio_raw, _ = _download_raw(url, "bestaudio/best", job_dir, "raw_audio")
         else:
             cap = f"[height<={height}]" if height else ""
-            video_raw = _download_raw(url, f"bestvideo{cap}/best{cap}", job_dir, "raw_video")
-            audio_raw = _download_raw(url, "bestaudio/best", job_dir, "raw_audio")
+            video_raw, video_info = _download_raw(url, f"bestvideo{cap}/best{cap}", job_dir, "raw_video")
+            resolved_height = video_info.get("height")
+            audio_raw, _ = _download_raw(url, "bestaudio/best", job_dir, "raw_audio")
 
-        output_path = os.path.join(job_dir, _safe_filename(title, output_format))
+        output_path = os.path.join(
+            job_dir, _safe_filename(title, output_format, resolved_height)
+        )
 
         from java import jclass
 

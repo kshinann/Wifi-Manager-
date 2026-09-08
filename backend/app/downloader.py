@@ -115,9 +115,14 @@ def download_media(
 
     job_dir = os.path.join(DOWNLOAD_ROOT, uuid.uuid4().hex)
     os.makedirs(job_dir, exist_ok=True)
-    outtmpl = os.path.join(job_dir, "%(title).200B.%(ext)s")
 
     is_audio_only = output_format in AUDIO_ONLY_FORMATS
+    # Tag video filenames with the resolved resolution (e.g. "Title [720p].mp4");
+    # %(height)s reflects the actually-selected format, not just the requested cap.
+    outtmpl = os.path.join(
+        job_dir,
+        "%(title).200B.%(ext)s" if is_audio_only else "%(title).180B [%(height)sp].%(ext)s",
+    )
 
     ydl_opts = {
         "quiet": True,
