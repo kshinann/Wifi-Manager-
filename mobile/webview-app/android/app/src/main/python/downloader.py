@@ -233,17 +233,20 @@ def save_to_downloads(file_path: str, mime_type: str) -> str:
     if ANDROID_CONTEXT is None:
         raise RuntimeError("downloader.configure() was not called with an Android context")
 
-    from java import jclass
+    from java import cast, jclass
 
     content_values_cls = jclass("android.content.ContentValues")
     media_store_downloads = jclass("android.provider.MediaStore$Downloads")
 
     filename = os.path.basename(file_path)
 
+    # ContentValues.put has six overloads for numeric types (Byte/Double/
+    # Float/Integer/Long/Short); a plain Python int is ambiguous to Chaquopy
+    # without an explicit cast telling it which one to call.
     values = content_values_cls()
     values.put("_display_name", filename)
     values.put("mime_type", mime_type)
-    values.put("is_pending", 1)
+    values.put("is_pending", cast("int", 1))
 
     resolver = ANDROID_CONTEXT.getContentResolver()
     uri = resolver.insert(media_store_downloads.EXTERNAL_CONTENT_URI, values)
@@ -262,7 +265,7 @@ def save_to_downloads(file_path: str, mime_type: str) -> str:
         out_stream.close()
 
     done_values = content_values_cls()
-    done_values.put("is_pending", 0)
+    done_values.put("is_pending", cast("int", 0))
     resolver.update(uri, done_values, None, None)
 
     return filename
