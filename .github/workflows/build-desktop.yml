@@ -1,0 +1,60 @@
+name: Build desktop app
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/video-download-app-yu5tlt
+    paths:
+      - .github/workflows/build-desktop.yml
+      - desktop/**
+      - backend/**
+      - frontend/**
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install backend + PyInstaller deps
+        working-directory: desktop
+        run: pip install -r requirements.txt
+
+      - name: Build backend executable
+        working-directory: desktop
+        run: pyinstaller backend.spec
+
+      - name: Build macOS .icns from the iconset
+        if: matrix.os == 'macos-latest'
+        working-directory: desktop
+        run: iconutil -c icns build/icon.iconset -o build/icon.icns
+
+      - name: Install Electron deps
+        working-directory: desktop
+        run: npm install
+
+      - name: Package desktop app
+        working-directory: desktop
+        run: npm run dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.os }}
+          path: |
+            desktop/release/*.exe
+            desktop/release/*.dmg
+            desktop/release/*.AppImage
+          if-no-files-found: error

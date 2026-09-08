@@ -52,6 +52,13 @@ Two Android app projects live under `mobile/` — a WebView wrapper around
 this same frontend, and a standalone native app that calls the API
 directly. See `mobile/README.md` for details and build instructions.
 
+## Desktop app
+
+A native Windows/macOS/Linux app lives under `desktop/` — an Electron
+window wrapping this same backend and frontend, with a bundled ffmpeg so
+nothing needs to be installed separately. See `desktop/README.md` for
+build instructions.
+
 ## API
 
 - `POST /api/search` — body `{"query": "...", "limit": 12}` — returns lightweight

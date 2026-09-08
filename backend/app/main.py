@@ -1,6 +1,7 @@
 """FastAPI app exposing video info lookup and download endpoints, plus the static frontend."""
 
 import os
+import sys
 from typing import Optional
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
@@ -72,8 +73,13 @@ def download(payload: DownloadRequest, background_tasks: BackgroundTasks):
     )
 
 
-_FRONTEND_DIR = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "frontend")
-)
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    # Running as a PyInstaller-bundled executable (see desktop/) — resources
+    # are unpacked under sys._MEIPASS instead of living next to this file.
+    _FRONTEND_DIR = os.path.join(sys._MEIPASS, "frontend")
+else:
+    _FRONTEND_DIR = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "frontend")
+    )
 if os.path.isdir(_FRONTEND_DIR):
     app.mount("/", StaticFiles(directory=_FRONTEND_DIR, html=True), name="frontend")
