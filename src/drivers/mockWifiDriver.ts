@@ -28,6 +28,10 @@ export const mockWifiDriver: RemoteDriver = {
     await simulateLatency(200, 500);
   },
 
+  async getState(device: Device): Promise<DeviceState> {
+    return device.state;
+  },
+
   async disconnect(): Promise<void> {
     await simulateLatency(50, 100);
   },

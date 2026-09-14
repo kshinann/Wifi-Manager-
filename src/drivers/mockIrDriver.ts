@@ -35,6 +35,10 @@ export const mockIrDriver: RemoteDriver = {
     await simulateLatency(50, 100);
   },
 
+  async getState(device: Device): Promise<DeviceState> {
+    return device.state;
+  },
+
   async sendCommand(device: Device, command: RemoteCommand): Promise<DeviceState> {
     await simulateLatency();
     const state: DeviceState = { ...device.state };

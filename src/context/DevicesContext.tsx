@@ -15,12 +15,22 @@ function generateId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+export interface AddDeviceParams {
+  type: DeviceType;
+  name: string;
+  // Explicit driver + host for devices resolved outside the type->driver
+  // default (WiFi devices found by scan, or entered manually by IP).
+  driverId?: string;
+  host?: string;
+}
+
 interface DevicesContextValue {
   devices: Device[];
   loading: boolean;
-  addDevice: (type: DeviceType, name: string) => Promise<void>;
+  addDevice: (params: AddDeviceParams) => Promise<void>;
   removeDevice: (deviceId: string) => Promise<void>;
   sendCommand: (deviceId: string, command: RemoteCommand) => Promise<void>;
+  refreshDevice: (deviceId: string) => Promise<void>;
   pendingDeviceIds: string[];
 }
 
@@ -43,17 +53,21 @@ export function DevicesProvider({ children }: { children: React.ReactNode }) {
     }
   }, [devices, loading]);
 
-  const addDevice = useCallback(async (type: DeviceType, name: string) => {
-    const driver = getDriverForType(type);
+  const addDevice = useCallback(async ({ type, name, driverId, host }: AddDeviceParams) => {
+    const driver = driverId ? getDriver(driverId) : getDriverForType(type);
     const device: Device = {
       id: generateId(),
       name,
       type,
       driverId: driver.id,
+      host,
       state: driver.createInitialState(type),
     };
     await driver.connect(device);
-    setDevices((prev) => [...prev, device]);
+    // A real device's actual current state (it may already be on, e.g. from
+    // a physical switch) takes priority over the placeholder initial state.
+    const state = await driver.getState(device);
+    setDevices((prev) => [...prev, { ...device, state }]);
   }, []);
 
   const removeDevice = useCallback(async (deviceId: string) => {
@@ -81,9 +95,30 @@ export function DevicesProvider({ children }: { children: React.ReactNode }) {
     }
   }, [devices]);
 
+  const refreshDevice = useCallback(async (deviceId: string) => {
+    setPendingDeviceIds((prev) => [...prev, deviceId]);
+    try {
+      const device = devices.find((d) => d.id === deviceId);
+      if (!device) return;
+      const driver = getDriver(device.driverId);
+      const state = await driver.getState(device);
+      setDevices((prev) => prev.map((d) => (d.id === deviceId ? { ...d, state } : d)));
+    } finally {
+      setPendingDeviceIds((prev) => prev.filter((id) => id !== deviceId));
+    }
+  }, [devices]);
+
   const value = useMemo(
-    () => ({ devices, loading, addDevice, removeDevice, sendCommand, pendingDeviceIds }),
-    [devices, loading, addDevice, removeDevice, sendCommand, pendingDeviceIds]
+    () => ({
+      devices,
+      loading,
+      addDevice,
+      removeDevice,
+      sendCommand,
+      refreshDevice,
+      pendingDeviceIds,
+    }),
+    [devices, loading, addDevice, removeDevice, sendCommand, refreshDevice, pendingDeviceIds]
   );
 
   return <DevicesContext.Provider value={value}>{children}</DevicesContext.Provider>;

@@ -2,10 +2,19 @@ import { DeviceType } from '../types/device';
 import { RemoteDriver } from '../types/driver';
 import { mockIrDriver } from './mockIrDriver';
 import { mockWifiDriver } from './mockWifiDriver';
+import { makeWifiHttpDriver } from './wifiHttpDriver';
+import { tasmotaAdapter } from '../wifi/protocols/tasmota';
+import { shellyAdapter } from '../wifi/protocols/shelly';
 
-// Register new transports here (real IR blaster, Bluetooth, a hub API, ...)
+export const tasmotaDriver = makeWifiHttpDriver(tasmotaAdapter);
+export const shellyDriver = makeWifiHttpDriver(shellyAdapter);
+
+// Register new transports here (a real IR blaster, Bluetooth, a hub API, ...)
 // as they're built. Screens and context only ever go through this registry.
-const drivers: RemoteDriver[] = [mockIrDriver, mockWifiDriver];
+// `light` devices are added with an explicit driverId (chosen by scan result,
+// manual entry, or the simulated/demo option) rather than resolved from type
+// alone, since several drivers here support it.
+const drivers: RemoteDriver[] = [mockIrDriver, tasmotaDriver, shellyDriver, mockWifiDriver];
 
 const driversById = new Map(drivers.map((driver) => [driver.id, driver]));
 

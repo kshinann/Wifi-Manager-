@@ -17,6 +17,7 @@ import type { RootStackParamList } from '../types/navigation';
 import { DEVICE_CATALOG, protocolLabelFor } from '../drivers/deviceCatalog';
 import { DeviceType } from '../types/device';
 import { useDevices } from '../context/DevicesContext';
+import { WifiDeviceSetup } from './WifiDeviceSetup';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddDevice'>;
 
@@ -35,7 +36,7 @@ export function AddDeviceScreen({ navigation }: Props) {
     }
     setSaving(true);
     try {
-      await addDevice(selectedType, trimmed);
+      await addDevice({ type: selectedType, name: trimmed });
       navigation.goBack();
     } catch (err) {
       Alert.alert('Could not add device', err instanceof Error ? err.message : String(err));
@@ -75,25 +76,36 @@ export function AddDeviceScreen({ navigation }: Props) {
             })}
           </View>
 
-          <Text style={styles.heading}>Name it</Text>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="e.g. Living Room TV"
-            placeholderTextColor="#9ca3af"
-            style={styles.input}
-          />
+          {selectedType === 'light' ? (
+            <>
+              <Text style={styles.heading}>Connect it</Text>
+              <WifiDeviceSetup onDone={() => navigation.goBack()} />
+            </>
+          ) : (
+            <>
+              <Text style={styles.heading}>Name it</Text>
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder="e.g. Living Room TV"
+                placeholderTextColor="#9ca3af"
+                style={styles.input}
+              />
+            </>
+          )}
         </ScrollView>
 
-        <View style={styles.footer}>
-          <Pressable
-            style={[styles.saveButton, (!selectedType || saving) && styles.saveButtonDisabled]}
-            disabled={!selectedType || saving}
-            onPress={handleSave}
-          >
-            <Text style={styles.saveButtonLabel}>{saving ? 'Connecting…' : 'Add device'}</Text>
-          </Pressable>
-        </View>
+        {selectedType !== 'light' && (
+          <View style={styles.footer}>
+            <Pressable
+              style={[styles.saveButton, (!selectedType || saving) && styles.saveButtonDisabled]}
+              disabled={!selectedType || saving}
+              onPress={handleSave}
+            >
+              <Text style={styles.saveButtonLabel}>{saving ? 'Connecting…' : 'Add device'}</Text>
+            </Pressable>
+          </View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

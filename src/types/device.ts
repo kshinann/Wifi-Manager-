@@ -19,5 +19,8 @@ export interface Device {
   name: string;
   type: DeviceType;
   driverId: string;
+  // IP address on the local network, for drivers that talk to a real device
+  // over HTTP (e.g. Tasmota, Shelly). Unused by mock/simulated drivers.
+  host?: string;
   state: DeviceState;
 }

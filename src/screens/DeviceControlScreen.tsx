@@ -7,12 +7,13 @@ import type { RootStackParamList } from '../types/navigation';
 import { useDevices } from '../context/DevicesContext';
 import { RemoteButton } from '../components/RemoteButton';
 import { RemoteCommand } from '../types/driver';
+import { getDriver } from '../drivers/driverRegistry';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'DeviceControl'>;
 
 export function DeviceControlScreen({ route, navigation }: Props) {
   const { deviceId } = route.params;
-  const { devices, pendingDeviceIds, sendCommand, removeDevice } = useDevices();
+  const { devices, pendingDeviceIds, sendCommand, removeDevice, refreshDevice } = useDevices();
   const device = devices.find((d) => d.id === deviceId);
   const busy = pendingDeviceIds.includes(deviceId);
 
@@ -20,27 +21,32 @@ export function DeviceControlScreen({ route, navigation }: Props) {
     navigation.setOptions({
       title: device?.name ?? 'Device',
       headerRight: () => (
-        <Pressable
-          onPress={() =>
-            Alert.alert('Remove device', `Remove "${device?.name}" from your remotes?`, [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Remove',
-                style: 'destructive',
-                onPress: async () => {
-                  await removeDevice(deviceId);
-                  navigation.goBack();
+        <View style={styles.headerActions}>
+          <Pressable onPress={() => refreshDevice(deviceId)} hitSlop={8} disabled={busy}>
+            <Ionicons name="refresh-outline" size={22} color={busy ? '#9ca3af' : '#374151'} />
+          </Pressable>
+          <Pressable
+            onPress={() =>
+              Alert.alert('Remove device', `Remove "${device?.name}" from your remotes?`, [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Remove',
+                  style: 'destructive',
+                  onPress: async () => {
+                    await removeDevice(deviceId);
+                    navigation.goBack();
+                  },
                 },
-              },
-            ])
-          }
-          hitSlop={8}
-        >
-          <Ionicons name="trash-outline" size={22} color="#dc2626" />
-        </Pressable>
+              ])
+            }
+            hitSlop={8}
+          >
+            <Ionicons name="trash-outline" size={22} color="#dc2626" />
+          </Pressable>
+        </View>
       ),
     });
-  }, [navigation, device?.name, deviceId, removeDevice]);
+  }, [navigation, device?.name, deviceId, removeDevice, refreshDevice, busy]);
 
   if (!device) {
     return (
@@ -52,6 +58,7 @@ export function DeviceControlScreen({ route, navigation }: Props) {
 
   const send = (command: RemoteCommand) => sendCommand(deviceId, command);
   const isOn = device.state.power;
+  const driver = getDriver(device.driverId);
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
@@ -64,6 +71,7 @@ export function DeviceControlScreen({ route, navigation }: Props) {
           busy={busy}
           onPress={() => send('power')}
         />
+        {device.host && <Text style={styles.hostLabel}>{device.host} · {driver.label}</Text>}
       </View>
 
       <View style={[styles.body, !isOn && styles.bodyDisabled]} pointerEvents={isOn ? 'auto' : 'none'}>
@@ -77,7 +85,7 @@ export function DeviceControlScreen({ route, navigation }: Props) {
           <FanControls state={device.state} send={send} busy={busy} />
         )}
         {device.type === 'light' && (
-          <LightControls state={device.state} send={send} busy={busy} />
+          <LightControls state={device.state} send={send} busy={busy} commands={driver.commands} />
         )}
         {device.type === 'speaker' && (
           <SpeakerControls state={device.state} send={send} busy={busy} />
@@ -152,18 +160,35 @@ function FanControls({ state, send, busy }: ControlsProps) {
   );
 }
 
-function LightControls({ state, send, busy }: ControlsProps) {
+function LightControls({ state, send, busy, commands }: ControlsProps & { commands?: RemoteCommand[] }) {
+  // A bare relay device (real Tasmota/Shelly plug) only supports on/off —
+  // dimming and color are simulated-only until a dimmer/RGB driver exists.
+  const supportsDimming = !commands || commands.includes('brightnessUp');
+  const supportsColor = !commands || commands.includes('cycleColor');
+
+  if (!supportsDimming && !supportsColor) {
+    return <Text style={styles.plainRelayNote}>This device is a plain on/off switch.</Text>;
+  }
+
   return (
     <>
-      <Stat label="Brightness" value={`${state.brightness ?? 0}%`} />
-      <Row>
-        <RemoteButton label="Dimmer" icon="remove" busy={busy} onPress={() => send('brightnessDown')} />
-        <RemoteButton label="Brighter" icon="add" busy={busy} onPress={() => send('brightnessUp')} />
-      </Row>
-      <Stat label="Color" value={state.color ?? '—'} swatch={state.color} />
-      <Row>
-        <RemoteButton label="Change color" icon="color-palette-outline" busy={busy} onPress={() => send('cycleColor')} />
-      </Row>
+      {supportsDimming && (
+        <>
+          <Stat label="Brightness" value={`${state.brightness ?? 0}%`} />
+          <Row>
+            <RemoteButton label="Dimmer" icon="remove" busy={busy} onPress={() => send('brightnessDown')} />
+            <RemoteButton label="Brighter" icon="add" busy={busy} onPress={() => send('brightnessUp')} />
+          </Row>
+        </>
+      )}
+      {supportsColor && (
+        <>
+          <Stat label="Color" value={state.color ?? '—'} swatch={state.color} />
+          <Row>
+            <RemoteButton label="Change color" icon="color-palette-outline" busy={busy} onPress={() => send('cycleColor')} />
+          </Row>
+        </>
+      )}
     </>
   );
 }
@@ -215,9 +240,24 @@ const styles = StyleSheet.create({
     marginTop: 40,
     color: '#6b7280',
   },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 18,
+  },
   powerRow: {
     alignItems: 'center',
     paddingVertical: 24,
+    gap: 8,
+  },
+  hostLabel: {
+    fontSize: 12,
+    color: '#9ca3af',
+  },
+  plainRelayNote: {
+    fontSize: 13,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginTop: 12,
   },
   body: {
     paddingHorizontal: 20,

@@ -26,8 +26,16 @@ export interface RemoteDriver {
   label: string;
   protocol: string;
   supports: DeviceType[];
+  // Commands this driver actually implements, so screens can hide controls a
+  // real device can't do (e.g. a bare relay only supports "power"). Omit to
+  // mean "all commands for the device type" (used by the mock drivers).
+  commands?: RemoteCommand[];
   createInitialState(type: DeviceType): DeviceState;
   connect(device: Device): Promise<void>;
   disconnect(device: Device): Promise<void>;
+  // Reads the device's authoritative current state (used right after adding
+  // a device, and for a manual refresh — a real device can change state
+  // outside the app, e.g. a physical switch).
+  getState(device: Device): Promise<DeviceState>;
   sendCommand(device: Device, command: RemoteCommand): Promise<DeviceState>;
 }
