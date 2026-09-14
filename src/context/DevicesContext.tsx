@@ -6,7 +6,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { Device, DeviceType } from '../types/device';
+import { Device, DeviceState, DeviceType } from '../types/device';
 import { RemoteCommand } from '../types/driver';
 import { getDriver, getDriverForType } from '../drivers/driverRegistry';
 import { loadDevices, saveDevices } from '../storage/deviceStorage';
@@ -42,9 +42,33 @@ export function DevicesProvider({ children }: { children: React.ReactNode }) {
   const [pendingDeviceIds, setPendingDeviceIds] = useState<string[]>([]);
 
   useEffect(() => {
-    loadDevices()
-      .then(setDevices)
-      .finally(() => setLoading(false));
+    (async () => {
+      const loaded = await loadDevices();
+      setDevices(loaded);
+      setLoading(false);
+
+      // Real devices can change state while the app is closed (a physical
+      // switch, another app). Re-sync them from the network on cold start,
+      // rather than trusting whatever was last persisted.
+      const realDevices = loaded.filter((d) => d.host);
+      if (realDevices.length === 0) return;
+      const realDeviceIds = realDevices.map((d) => d.id);
+      setPendingDeviceIds((prev) => [...prev, ...realDeviceIds]);
+      const results = await Promise.allSettled(
+        realDevices.map(async (d) => ({ id: d.id, state: await getDriver(d.driverId).getState(d) }))
+      );
+      const freshStateById = new Map<string, DeviceState>();
+      for (const result of results) {
+        if (result.status === 'fulfilled') freshStateById.set(result.value.id, result.value.state);
+      }
+      setDevices((prev) =>
+        prev.map((d) => {
+          const state = freshStateById.get(d.id);
+          return state ? { ...d, state } : d;
+        })
+      );
+      setPendingDeviceIds((prev) => prev.filter((id) => !realDeviceIds.includes(id)));
+    })();
   }, []);
 
   useEffect(() => {
@@ -71,14 +95,13 @@ export function DevicesProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const removeDevice = useCallback(async (deviceId: string) => {
-    setDevices((prev) => {
-      const device = prev.find((d) => d.id === deviceId);
-      if (device) {
-        getDriver(device.driverId).disconnect(device);
-      }
-      return prev.filter((d) => d.id !== deviceId);
-    });
-  }, []);
+    const device = devices.find((d) => d.id === deviceId);
+    if (device) {
+      // Fire-and-forget: a device that's already gone shouldn't block removal.
+      getDriver(device.driverId).disconnect(device).catch(() => {});
+    }
+    setDevices((prev) => prev.filter((d) => d.id !== deviceId));
+  }, [devices]);
 
   const sendCommand = useCallback(async (deviceId: string, command: RemoteCommand) => {
     setPendingDeviceIds((prev) => [...prev, deviceId]);
