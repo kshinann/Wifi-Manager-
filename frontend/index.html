@@ -23,6 +23,31 @@
 
     <p id="status" class="status" hidden></p>
 
+    <details id="cookie-settings" class="cookie-settings" hidden>
+      <summary>Sites that need a login</summary>
+      <p class="settings-hint">
+        Some sites (private videos, age-gated content, some non-YouTube sites) only work if
+        you're logged in. Pick a browser you're logged in with on this computer and its cookies
+        will be reused — nothing is uploaded anywhere else.
+      </p>
+      <div class="settings-row">
+        <select id="cookie-browser-select">
+          <option value="">Don't use any browser's login</option>
+          <option value="chrome">Chrome</option>
+          <option value="chromium">Chromium</option>
+          <option value="firefox">Firefox</option>
+          <option value="edge">Edge</option>
+          <option value="brave">Brave</option>
+          <option value="opera">Opera</option>
+          <option value="vivaldi">Vivaldi</option>
+          <option value="safari">Safari</option>
+          <option value="whale">Whale</option>
+        </select>
+        <button id="cookie-save-btn" type="button">Save</button>
+      </div>
+      <p id="cookie-settings-status" class="status" hidden></p>
+    </details>
+
     <div id="results-grid" class="results-grid" hidden></div>
 
     <section id="player-section" class="player-section" hidden>

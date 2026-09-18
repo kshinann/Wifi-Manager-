@@ -49,13 +49,27 @@ def search_videos(query: str, limit: int = 12) -> list:
     return results
 
 
-def fetch_info(url: str) -> dict:
+def _cookie_opts(cookies_browser: Optional[str]) -> dict:
+    """yt-dlp options to authenticate as the given browser's logged-in session.
+
+    Lets sites that require a login (private videos, age-gated content, some
+    non-YouTube sites) work as long as the user is logged in to that browser
+    on this machine. Desktop-only: there's no installed browser to borrow
+    cookies from inside the mobile app or a headless server.
+    """
+    if not cookies_browser:
+        return {}
+    return {"cookiesfrombrowser": (cookies_browser,)}
+
+
+def fetch_info(url: str, cookies_browser: Optional[str] = None) -> dict:
     """Return metadata and available formats for a video URL, without downloading it."""
     ydl_opts = {
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
         "noplaylist": True,
+        **_cookie_opts(cookies_browser),
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
@@ -107,6 +121,7 @@ def download_media(
     output_format: str,
     height: Optional[int] = None,
     format_id: Optional[str] = None,
+    cookies_browser: Optional[str] = None,
 ) -> str:
     """Download the media at `url`, converting it to `output_format`. Returns the local file path."""
     output_format = output_format.lower()
@@ -130,6 +145,7 @@ def download_media(
         "noplaylist": True,
         "outtmpl": outtmpl,
         "postprocessors": [],
+        **_cookie_opts(cookies_browser),
     }
 
     if format_id:

@@ -81,6 +81,32 @@ button:disabled {
   color: var(--error);
 }
 
+.cookie-settings {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.cookie-settings summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.settings-hint {
+  margin: 10px 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.settings-row {
+  display: flex;
+  gap: 8px;
+}
+
 .results-grid {
   margin-top: 24px;
   display: grid;

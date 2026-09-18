@@ -9,6 +9,11 @@ const VIDEO_FORMATS = IS_EMBEDDED_APP ? ["mp4", "webm"] : ["mp4", "webm", "mkv",
 const AUDIO_FORMATS = IS_EMBEDDED_APP ? ["m4a"] : ["mp3", "m4a", "wav", "aac", "opus", "flac"];
 const URL_PATTERN = /^https?:\/\//i;
 
+const cookieSettingsEl = document.getElementById("cookie-settings");
+const cookieBrowserSelect = document.getElementById("cookie-browser-select");
+const cookieSaveBtn = document.getElementById("cookie-save-btn");
+const cookieSettingsStatusEl = document.getElementById("cookie-settings-status");
+
 const searchForm = document.getElementById("search-form");
 const searchInput = document.getElementById("search-input");
 const searchBtn = document.getElementById("search-btn");
@@ -186,6 +191,44 @@ function renderResults(results) {
 
   resultsGrid.hidden = false;
 }
+
+async function initCookieSettings() {
+  // Desktop-only: there's no browser on the phone to borrow cookies from,
+  // and the embedded on-device server doesn't expose a /api/settings route.
+  if (IS_EMBEDDED_APP) return;
+
+  cookieSettingsEl.hidden = false;
+  try {
+    const res = await fetch(`${API_BASE}/api/settings`);
+    const data = await res.json();
+    cookieBrowserSelect.value = data.cookies_browser || "";
+  } catch {
+    // Leave the default selection if settings can't be loaded.
+  }
+}
+
+cookieSaveBtn.addEventListener("click", async () => {
+  cookieSaveBtn.disabled = true;
+  setStatus(cookieSettingsStatusEl, "Saving...");
+  try {
+    const res = await fetch(`${API_BASE}/api/settings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cookies_browser: cookieBrowserSelect.value || null }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.detail || "Failed to save");
+    }
+    setStatus(cookieSettingsStatusEl, "Saved.");
+  } catch (err) {
+    setStatus(cookieSettingsStatusEl, err.message, true);
+  } finally {
+    cookieSaveBtn.disabled = false;
+  }
+});
+
+initCookieSettings();
 
 searchForm.addEventListener("submit", async (e) => {
   e.preventDefault();

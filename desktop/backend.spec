@@ -17,13 +17,15 @@ datas = [(frontend_dir, "frontend")]
 binaries = []
 hiddenimports = []
 
-# yt-dlp loads most of its site extractors dynamically, and imageio-ffmpeg
-# ships its static ffmpeg binary as package data — both can be missed by
-# PyInstaller's static import analysis, so pull everything in explicitly.
+# yt-dlp loads most of its site extractors dynamically, imageio-ffmpeg ships
+# its static ffmpeg binary as package data, and Cryptodome (used by yt-dlp's
+# --cookies-from-browser support, see settings_store.py) picks its compiled
+# cipher backend dynamically too — all three can be missed by PyInstaller's
+# static import analysis, so pull everything in explicitly.
 # collect_all() returns raw (source, dest) specs meant for Analysis(), not
 # the processed TOC entries Analysis produces afterwards — these must go
 # in *before* Analysis runs, not be appended to a.datas/a.binaries after.
-for pkg in ("yt_dlp", "imageio_ffmpeg"):
+for pkg in ("yt_dlp", "imageio_ffmpeg", "Cryptodome"):
     pkg_datas, pkg_binaries, pkg_hiddenimports = collect_all(pkg)
     datas += pkg_datas
     binaries += pkg_binaries

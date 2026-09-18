@@ -62,6 +62,20 @@ responds. The most likely rough edges if something's wrong:
   `main.js`'s `backendExecutablePath()` is where to look if the packaged
   app can't find its backend.
 
+## Sites that need a login
+
+This is the one place the "Sites that need a login" panel in the shared
+frontend actually works (see the root `README.md`): `backend/app/downloader.py`
+passes the stored `cookies_browser` setting to yt-dlp as `cookiesfrombrowser`,
+which reads that browser's cookie database directly off disk. Two knock-on
+effects worth knowing about when packaging:
+- `backend/requirements.txt` now pulls in `pycryptodomex` (Chrome/Edge/Brave
+  encrypt their cookie DB; that's the decryption library) and, on Linux,
+  `secretstorage` (reads the decryption key from the Secret Service keyring).
+- `backend.spec` runs `collect_all("Cryptodome")` for the same dynamic-import
+  reason as `yt_dlp` above — Cryptodome picks its compiled cipher backend at
+  runtime, which PyInstaller's static analysis can miss.
+
 ## Notes
 
 - Only download content you have the right to download, and respect the

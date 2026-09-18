@@ -2,3 +2,9 @@ fastapi>=0.110
 uvicorn[standard]>=0.29
 yt-dlp>=2024.8.6
 pydantic>=2.6
+
+# Needed by yt-dlp's --cookies-from-browser support (see settings_store.py):
+# decrypts Chrome/Edge/Brave/etc.'s cookie DB, and reads the Linux keyring
+# some of them store the decryption key in.
+pycryptodomex>=3.19
+secretstorage>=3.3; sys_platform == "linux"

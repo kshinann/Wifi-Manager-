@@ -59,6 +59,17 @@ window wrapping this same backend and frontend, with a bundled ffmpeg so
 nothing needs to be installed separately. See `desktop/README.md` for
 build instructions.
 
+## Sites that need a login
+
+Desktop only (the "Sites that need a login" panel on the page): pick a
+browser you're already logged in with on the same computer, and its cookies
+are reused for `yt-dlp` requests, the same way `yt-dlp --cookies-from-browser
+<browser>` works from the command line. This covers private/unlisted videos,
+age-gated content, and non-YouTube sites that only serve certain content to
+logged-in users. Nothing is uploaded anywhere else — the cookies never leave
+this machine. Not available in the standalone mobile app or a headless
+server deployment, since there's no browser to borrow cookies from.
+
 ## API
 
 - `POST /api/search` — body `{"query": "...", "limit": 12}` — returns lightweight
@@ -70,6 +81,10 @@ build instructions.
   `height` and `format_id` are optional; omit `height` for the best available
   resolution, or pass a specific `format_id` from `/api/info` to pick an exact
   source stream.
+- `GET /api/settings` / `POST /api/settings` — body `{"cookies_browser": "chrome"}`
+  (or `null` to disable) — reads/sets which browser's cookies to reuse for
+  sites that need a login. Supported values: `chrome`, `chromium`, `firefox`,
+  `edge`, `brave`, `opera`, `vivaldi`, `safari`, `whale`.
 
 ## Notes
 
