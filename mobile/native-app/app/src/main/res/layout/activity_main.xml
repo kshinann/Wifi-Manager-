@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:textColor="@color/text_primary"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <EditText
+            android:id="@+id/server_url_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Server URL, e.g. http://192.168.1.20:8000"
+            android:inputType="textUri"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/muted"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/video_url_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Video URL"
+            android:inputType="textUri"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/muted"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/fetch_btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Fetch" />
+
+        <ProgressBar
+            android:id="@+id/fetch_progress"
+            android:indeterminate="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/status_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/muted" />
+
+        <LinearLayout
+            android:id="@+id/result_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/card"
+            android:padding="16dp"
+            android:layout_marginTop="16dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/thumbnail_image"
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:scaleType="centerCrop"
+                android:contentDescription="@string/thumbnail_description"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/title_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/uploader_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/muted"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/duration_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/muted"
+                android:layout_marginTop="2dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Format"
+                android:textColor="@color/muted"
+                android:layout_marginTop="16dp" />
+
+            <Spinner
+                android:id="@+id/format_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Resolution"
+                android:textColor="@color/muted"
+                android:layout_marginTop="12dp" />
+
+            <Spinner
+                android:id="@+id/resolution_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <Button
+                android:id="@+id/download_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Download"
+                android:layout_marginTop="16dp" />
+
+            <ProgressBar
+                android:id="@+id/download_progress"
+                android:indeterminate="true"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/download_status_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/muted"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

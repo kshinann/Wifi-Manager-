@@ -1,0 +1,8 @@
+{
+  "appId": "com.videodownloader.app",
+  "appName": "UTube Download",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
