@@ -50,6 +50,9 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.arcore)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
     debugImplementation(libs.androidx.ui.tooling)
 
     testImplementation(libs.junit)

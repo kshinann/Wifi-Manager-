@@ -27,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -53,6 +54,7 @@ import com.google.ar.core.exceptions.UnavailableApkTooOldException
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
+import com.measurekit.app.MeasurementStore
 import com.measurekit.app.ui.PermissionGate
 import com.measurekit.app.units.UnitSystem
 import com.measurekit.app.units.Units
@@ -123,6 +125,14 @@ private fun ArSessionView(mode: ArMode, units: UnitSystem, modifier: Modifier) {
     }
 
     val state by controller.state.collectAsStateWithLifecycle()
+
+    // Share the latest length so other tools (e.g. the speed trap distance) can reuse it.
+    val pointCount = state.points.size
+    LaunchedEffect(mode, pointCount) {
+        if (mode == ArMode.LENGTH && pointCount >= 2) {
+            MeasurementStore.setLastLength(MeasureGeometry.pathLength(controller.state.value.points))
+        }
+    }
 
     Box(modifier) {
         AndroidView(factory = { glView }, modifier = Modifier.fillMaxSize())

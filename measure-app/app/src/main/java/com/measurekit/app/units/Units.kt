@@ -52,13 +52,17 @@ object Units {
 
     fun speedUnit(system: UnitSystem): String = if (system == UnitSystem.METRIC) "km/h" else "mph"
 
-    fun distance(meters: Double, system: UnitSystem): String = when (system) {
-        UnitSystem.METRIC -> if (meters < 1000) fmt(meters, 0, "m") else fmt(meters / 1000, 2, "km")
-        UnitSystem.IMPERIAL -> {
-            val miles = meters / 1609.344
-            if (miles < 0.1) fmt(meters / METERS_PER_FOOT, 0, "ft") else fmt(miles, 2, "mi")
-        }
-    }
+    fun speed(metersPerSecond: Double, system: UnitSystem): String =
+        fmt(speedValue(metersPerSecond, system), 1, speedUnit(system))
+
+    /** Unit that distances are typed in for the speed tools (metres or feet). */
+    fun distanceInputUnit(system: UnitSystem): String = if (system == UnitSystem.METRIC) "m" else "ft"
+
+    fun distanceInputToMeters(value: Double, system: UnitSystem): Double =
+        if (system == UnitSystem.METRIC) value else value * METERS_PER_FOOT
+
+    fun metersToDistanceInput(meters: Double, system: UnitSystem): Double =
+        if (system == UnitSystem.METRIC) meters else meters / METERS_PER_FOOT
 
     /** Unit that the liquid calculator's dimension inputs are typed in. */
     fun inputLengthUnit(system: UnitSystem): String = if (system == UnitSystem.METRIC) "cm" else "in"
