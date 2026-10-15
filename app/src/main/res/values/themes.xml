@@ -1,0 +1,12 @@
+<resources>
+    <!--
+        Pure Compose UI: the platform theme only needs to cover the window
+        background shown before Compose draws its first frame, so it
+        intentionally extends a plain platform theme rather than pulling in
+        the Material Components library.
+    -->
+    <style name="Theme.WifiHealthManager" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/ic_launcher_background</item>
+        <item name="android:windowBackground">@android:color/white</item>
+    </style>
+</resources>
