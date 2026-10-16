@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Same roof/"A" mark as the app header, centred in the 66dp safe zone -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M36,72 L54,38 L72,72"
+        android:strokeColor="@color/on_hivis"
+        android:strokeWidth="6.5"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M43.5,60 L64.5,60"
+        android:strokeColor="@color/on_hivis"
+        android:strokeWidth="6.5"
+        android:fillColor="#00000000" />
+</vector>

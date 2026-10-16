@@ -1,0 +1,50 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'my.com.varia.connect'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'my.com.varia.connect'
+        minSdk 26
+        targetSdk 34
+        // CI run number, so each new test build installs over the previous one
+        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1') as Integer)
+        versionName '0.1.0'
+    }
+
+    signingConfigs {
+        // Shared debug key committed for test builds only, so updates install
+        // without uninstalling. Never use it for a Play Store release.
+        debug {
+            storeFile file('debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+    }
+
+    buildTypes {
+        debug { signingConfig signingConfigs.debug }
+    }
+
+    sourceSets {
+        // The app ships the same HTML as the web mockup, so both stay in sync
+        main { assets.srcDirs = ['src/main/assets', '../../mockup'] }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+base {
+    archivesName = 'VariaConnect-0.1.0'
+}
+
+dependencies {
+    implementation 'androidx.core:core:1.13.1'
+}
