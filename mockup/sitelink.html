@@ -1,0 +1,762 @@
+<title>SiteLink Construction Suite</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: site-office app shell — signage-style condensed headers, concrete neutrals, engineering blue for action, hi-vis amber only for safety calls to action */
+:root{
+  --bg:#ECEFF0; --surface:#FFFFFF; --surface-2:#F4F6F7; --fg:#1B2328; --muted:#5B676F; --line:#D3D9DC;
+  --primary:#1F4E79; --primary-soft:#E3ECF5; --on-primary:#FFFFFF;
+  --hivis:#F2A900; --on-hivis:#1B1A12;
+  --ok:#2C7A4B; --ok-soft:#E1F1E7; --warn:#9A6312; --warn-soft:#FBF0DA; --bad:#B53328; --bad-soft:#F8E3E0;
+  --plan:#8A979E;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161A; --surface:#192025; --surface-2:#1F282E; --fg:#E4E9EB; --muted:#97A3AA; --line:#2C373D;
+  --primary:#7BAEDD; --primary-soft:#1D3347; --on-primary:#0E1A25;
+  --hivis:#F5B82E; --on-hivis:#1B1A12;
+  --ok:#62C48B; --ok-soft:#173326; --warn:#E3AA52; --warn-soft:#3A2C14; --bad:#EE7B70; --bad-soft:#3D1D1A;
+  --plan:#6E7B82; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#11161A; --surface:#192025; --surface-2:#1F282E; --fg:#E4E9EB; --muted:#97A3AA; --line:#2C373D;
+  --primary:#7BAEDD; --primary-soft:#1D3347; --on-primary:#0E1A25;
+  --hivis:#F5B82E; --on-hivis:#1B1A12;
+  --ok:#62C48B; --ok-soft:#173326; --warn:#E3AA52; --warn-soft:#3A2C14; --bad:#EE7B70; --bad-soft:#3D1D1A;
+  --plan:#6E7B82; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.num,td.n,.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line);
+  padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--f-display);font-weight:700;font-size:22px;letter-spacing:.02em;text-transform:uppercase}
+.brand svg{width:26px;height:26px}
+.proj{display:flex;flex-direction:column;line-height:1.2;min-width:0;padding-left:12px;border-left:1px solid var(--line)}
+.proj b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.proj span{font-size:12px;color:var(--muted)}
+.spacer{flex:1}
+.ctl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+select{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:6px 8px;font-size:13px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:7px 12px;cursor:pointer;font-weight:500;font-size:13px;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.pri{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.hv{background:var(--hivis);color:var(--on-hivis);border-color:var(--hivis);font-weight:600}
+.btn.sm{padding:4px 9px;font-size:12px}
+.btn[disabled]{opacity:.55;cursor:default}
+
+/* shell */
+.shell{display:grid;grid-template-columns:220px minmax(0,1fr);min-height:calc(100% - 60px)}
+nav.side{background:var(--surface);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:2px}
+nav.side .grp{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:12px 10px 4px}
+nav.side button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:none;padding:8px 10px;border-radius:var(--r);cursor:pointer;color:var(--fg)}
+nav.side button svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8}
+nav.side button:hover{background:var(--surface-2)}
+nav.side button[aria-current="page"]{background:var(--primary-soft);color:var(--primary);font-weight:600}
+nav.side .badge{margin-left:auto;font-size:11px;font-family:var(--f-mono);background:var(--bad-soft);color:var(--bad);border-radius:10px;padding:0 7px}
+main{min-width:0;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:.01em}
+h1{font-size:30px;font-weight:700;text-transform:uppercase}
+h2{font-size:20px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+h3{font-size:17px;font-weight:600}
+.sub{color:var(--muted);margin:2px 0 0}
+.head{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;justify-content:space-between}
+.eyebrow{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+.demo{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--surface-2);border:1px dashed var(--line);border-radius:var(--r);padding:8px 12px;font-size:13px;color:var(--muted)}
+.demo b{color:var(--fg)}
+.link{background:none;border:0;padding:0;color:var(--primary);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+@media (max-width:720px){.g2{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.panel > .ph{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.kpi .l{font-size:12px;color:var(--muted)}
+.kpi .v{font-family:var(--f-display);font-size:34px;font-weight:600;line-height:1.05;font-variant-numeric:tabular-nums}
+.kpi .v small{font-size:16px;color:var(--muted);font-weight:500}
+.kpi .d{font-size:12px}
+.kpi.alert{border-left:4px solid var(--bad)}
+.kpi.caution{border-left:4px solid var(--hivis)}
+.up{color:var(--ok)} .down{color:var(--bad)}
+
+.tbl{overflow-x:auto;margin:0 -4px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{text-align:right;white-space:nowrap}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--surface-2)}
+tr.sec td{background:var(--surface-2);font-weight:600;font-family:var(--f-display);font-size:15px;letter-spacing:.03em;text-transform:uppercase}
+tfoot td{font-weight:600;border-bottom:0}
+
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;border-radius:20px;padding:1px 9px;white-space:nowrap;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.pill.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.pill.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.pill.info{background:var(--primary-soft);color:var(--primary);border-color:transparent}
+.tag{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{border:0;background:none;padding:8px 12px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;font-weight:500}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--primary)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:20px;padding:3px 11px;font-size:12.5px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+
+.bar{height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden;border:1px solid var(--line);min-width:60px}
+.bar i{display:block;height:100%;background:var(--primary)}
+.bar.low i{background:var(--bad)} .bar.mid i{background:var(--hivis)}
+
+.list{display:flex;flex-direction:column}
+.li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:0}
+.li .t{flex:1;min-width:0}
+.li .t b{font-weight:600}
+.li .t p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.when{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.sev{width:4px;align-self:stretch;border-radius:2px;background:var(--line);flex:none}
+.sev.bad{background:var(--bad)} .sev.warn{background:var(--hivis)} .sev.ok{background:var(--ok)}
+
+.chart svg{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-family:var(--f-mono);font-size:10px}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+
+.hero-cta{display:flex;flex-direction:column;align-items:flex-start;gap:10px;background:var(--hivis);color:var(--on-hivis);border-radius:var(--r);padding:20px}
+.hero-cta h2{font-size:26px}
+.hero-cta .btn{background:var(--on-hivis);color:var(--hivis);border-color:var(--on-hivis)}
+.checkin{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.big{font-family:var(--f-display);font-size:44px;font-weight:600;line-height:1}
+
+.feat{display:flex;flex-direction:column;gap:8px}
+.feat ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.feat li{font-size:13.5px}
+.feat .phase{font-family:var(--f-mono);font-size:10.5px;color:var(--muted);margin-left:4px}
+
+/* modal + drawer */
+.scrim{position:fixed;inset:0;background:rgba(10,14,17,.45);z-index:20;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:8px;width:min(560px,100%);max-height:calc(100% - 32px);overflow:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+.modal .mh{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.x{border:0;background:none;font-size:22px;line-height:1;cursor:pointer;color:var(--muted);padding:4px 8px}
+form{display:flex;flex-direction:column;gap:12px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+label.f input,label.f select,label.f textarea{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:8px;font-size:14px;color:var(--fg)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:480px){.row2{grid-template-columns:1fr}}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:var(--r);padding:6px 10px;cursor:pointer;font-size:13px;color:var(--fg)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:var(--r);z-index:30;font-size:13.5px;max-width:calc(100% - 32px)}
+
+@media (max-width:860px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  nav.side{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:6px max(10px,env(safe-area-inset-left,0px));gap:4px;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--toph,58px));z-index:4}
+  nav.side .grp{display:none}
+  nav.side button{width:auto;white-space:nowrap;padding:7px 10px}
+  .proj{display:none}
+  h1{font-size:26px}
+}
+@media (prefers-reduced-motion:no-preference){.panel,.kpi{animation:in .25s ease-out both}@keyframes in{from{transform:translateY(4px)}to{transform:none}}}
+</style>
+
+<header class="top" id="top">
+  <div class="brand" aria-label="SiteLink">
+    <svg viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="4" fill="var(--hivis)"/><path d="M6 19 13 6l7 13" stroke="var(--on-hivis)" stroke-width="2.4" fill="none" stroke-linejoin="round"/><path d="M9 14h8" stroke="var(--on-hivis)" stroke-width="2.4"/></svg>
+    SiteLink
+  </div>
+  <div class="proj"><b id="projName">Residensi Melati — Block B</b><span>18-storey condominium · Setapak, KL</span></div>
+  <div class="spacer"></div>
+  <label class="ctl" for="role">Viewing as
+    <select id="role">
+      <option value="office">Head office / Client</option>
+      <option value="manager" selected>Site manager</option>
+      <option value="worker">Worker / Subcon</option>
+      <option value="it">Site IT admin</option>
+    </select>
+  </label>
+  <button class="btn hv" id="reportBtn" type="button">＋ Report hazard</button>
+</header>
+
+<div class="shell">
+  <nav class="side" id="nav" aria-label="Modules"></nav>
+  <main><div class="wrap" id="view"></div></main>
+</div>
+
+<div id="layer"></div>
+
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const RM = n => 'RM ' + n.toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
+const RMk = n => n>=1e6 ? 'RM '+(n/1e6).toFixed(2)+'M' : 'RM '+Math.round(n/1e3)+'k';
+
+/* ---------- icons ---------- */
+const I = {
+  home:'<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/>',
+  safety:'<path d="M4 15a8 8 0 0 1 16 0"/><path d="M2 15h20v3H2z"/><path d="M12 7v4"/>',
+  ops:'<rect x="4" y="4" width="16" height="17" rx="1"/><path d="M8 2v4M16 2v4M8 11h8M8 15h5"/>',
+  design:'<path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/>',
+  bq:'<rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 7h8M8 11h8M8 15h3M14 15h2"/>',
+  mat:'<path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/>',
+  plant:'<path d="M4 20h16"/><path d="M6 20V9h6l3 5h3v6"/><circle cx="8" cy="20" r="0"/><path d="M12 9V4h3"/>',
+  net:'<path d="M2 9a15 15 0 0 1 20 0"/><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r=".8"/>',
+  map:'<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/>'
+};
+
+/* ---------- sample data ---------- */
+const D = {
+  hazards:[
+    {id:'HZ-0141',t:'Missing edge protection, L12 east slab',loc:'Level 12',sev:'bad',by:'Rahim (Formwork)',when:'09:42',st:'Open'},
+    {id:'HZ-0140',t:'Loose rebar stack near hoist entrance',loc:'Ground / Hoist',sev:'warn',by:'Siti (Safety)',when:'08:15',st:'In action'},
+    {id:'HZ-0139',t:'Extension cable through standing water',loc:'Basement 1',sev:'warn',by:'Kumar (M&E)',when:'Yesterday',st:'Closed'}
+  ],
+  permits:[
+    {id:'PTW-0388',type:'Work at height',area:'Façade, L14–L16',holder:'Jaya Scaffold Sdn Bhd',until:'17:30',st:'Active'},
+    {id:'PTW-0389',type:'Hot work',area:'Roof — steel bracket welding',holder:'Teguh Steel Works',until:'16:00',st:'Active'},
+    {id:'PTW-0390',type:'Lifting (tower crane)',area:'Precast panels to L12',holder:'In-house crane team',until:'18:00',st:'Active'},
+    {id:'PTW-0391',type:'Confined space',area:'Sump pit, Basement 2',holder:'Kumar M&E',until:'—',st:'Pending approval'}
+  ],
+  greencard:[
+    {n:'Ahmad Faizal',trade:'Bar bender',exp:'2026-10-29',days:13},
+    {n:'Nguyen Van Long',trade:'Formworker',exp:'2026-11-04',days:19},
+    {n:'Ravi Subramaniam',trade:'Scaffolder',exp:'2026-10-20',days:4}
+  ],
+  manpower:[['Formwork',46],['Rebar',38],['Concreting',14],['Scaffold',12],['M&E',22],['Brickwork',18],['General',9]],
+  tasks:[
+    {w:'Wk 42',t:'Cast L12 slab (Zone A)',who:'Formwork / Concrete',p:80,st:'On track'},
+    {w:'Wk 42',t:'Install precast façade panels L10–L11',who:'Precast subcon',p:55,st:'At risk'},
+    {w:'Wk 43',t:'Brickwork L6–L7',who:'Brickwork subcon',p:20,st:'On track'},
+    {w:'Wk 43',t:'M&E first fix L4–L5',who:'Kumar M&E',p:10,st:'Delayed'},
+    {w:'Wk 44',t:'Formwork L13 columns',who:'Formwork',p:0,st:'Not started'}
+  ],
+  rfi:[
+    {id:'RFI-062',t:'Beam B12/4 rebar clash with sleeve for 150mm drain',to:'C&S Consultant',age:6,st:'Open'},
+    {id:'RFI-061',t:'Confirm tile layout at lift lobby L3',to:'Architect',age:3,st:'Open'},
+    {id:'RFI-058',t:'Waterproofing spec for planter box L7',to:'Architect',age:12,st:'Answered'}
+  ],
+  ncr:[
+    {id:'NCR-019',t:'Honeycombing at column C7, L9',trade:'Concrete',st:'Rectification'},
+    {id:'NCR-018',t:'Cover to rebar < 25mm at slab L10 Zone B',trade:'Rebar',st:'Closed'}
+  ],
+  drawings:[
+    {no:'ARC-B-201',ti:'Floor plan Level 12',d:'ARC',rev:'C',st:'IFC',dt:'2026-09-28',hist:['A — Tender (2025-11-02)','B — Revised unit layout (2026-05-14)','C — IFC (2026-09-28)'],rfi:['RFI-061']},
+    {no:'STR-B-412',ti:'L12 slab reinforcement layout',d:'STR',rev:'D',st:'IFC',dt:'2026-10-02',hist:['A — Tender','B — Added drop panels','C — Beam B12 resized','D — IFC (2026-10-02)'],rfi:['RFI-062']},
+    {no:'STR-B-413',ti:'L13 column schedule',d:'STR',rev:'B',st:'For approval',dt:'2026-10-12',hist:['A — Tender','B — For approval (2026-10-12)'],rfi:[]},
+    {no:'MEP-B-305',ti:'Plumbing riser diagram',d:'MEP',rev:'B',st:'Superseded',dt:'2026-06-30',hist:['A — Tender','B — Superseded by Rev C (pending)'],rfi:['RFI-062']},
+    {no:'ARC-B-510',ti:'Façade elevation — East',d:'ARC',rev:'E',st:'IFC',dt:'2026-08-19',hist:['A — Tender','…','E — IFC (2026-08-19)'],rfi:[]},
+    {no:'SD-PRC-021',ti:'Shop drawing — precast panel P-14',d:'Shop',rev:'1',st:'Comments',dt:'2026-10-14',hist:['0 — Submitted (2026-10-07)','1 — Resubmitted with lifting points (2026-10-14)'],rfi:[]}
+  ],
+  bq:[
+    {sec:'1 · Preliminaries',items:[
+      ['1.1','Site establishment, hoarding & site office','Item',1,385000,100],
+      ['1.2','Tower crane & passenger hoist (rental + operator)','Month',24,62000,58],
+      ['1.3','Safety & health officer, PPE, signage','Month',24,18500,58]]},
+    {sec:'2 · Substructure',items:[
+      ['2.1','Bored piles 600mm dia. incl. testing','m',4820,265,100],
+      ['2.2','Pile caps & ground beams, Grade 35 concrete','m³',1260,410,100]]},
+    {sec:'3 · Superstructure',items:[
+      ['3.1','Reinforced concrete, Grade 40, slabs & beams','m³',9800,395,64],
+      ['3.2','High-tensile reinforcement bars (Y-bar)','tonne',1520,3650,66],
+      ['3.3','Formwork to soffits & sides','m²',61400,48,62],
+      ['3.4','Precast façade panels incl. installation','No.',684,4200,31]]},
+    {sec:'4 · Finishes & M&E',items:[
+      ['4.1','Brickwork 115mm, incl. plastering both sides','m²',38200,62,12],
+      ['4.2','M&E services — Provisional sum','Sum',1,6800000,9]]}
+  ],
+  vo:[
+    {id:'VO-07',t:'Additional drop panels at L12–L18',amt:286400,st:'Approved'},
+    {id:'VO-08',t:'Upgrade lobby flooring to homogeneous tile',amt:94200,st:'Submitted'},
+    {id:'VO-09',t:'Omit planter box at L7 (client instruction)',amt:-38750,st:'Draft'}
+  ],
+  stock:[
+    {m:'Cement (OPC 50kg bag)',u:'bag',on:420,min:300,max:1200},
+    {m:'Rebar Y16',u:'tonne',on:18.5,min:25,max:80},
+    {m:'Rebar Y12',u:'tonne',on:31,min:20,max:60},
+    {m:'Plywood 18mm formwork',u:'sheet',on:260,min:150,max:600},
+    {m:'Clay bricks',u:'k pcs',on:42,min:30,max:120},
+    {m:'Ready-mix G40',u:'m³ booked today',on:96,min:0,max:120}
+  ],
+  deliveries:[
+    {time:'07:30',what:'Ready-mix G40 · 12 trucks (96 m³)',from:'YTL Readymix',st:'In progress'},
+    {time:'10:00',what:'Rebar Y16 · 30 t',from:'Southern Steel',st:'Expected'},
+    {time:'14:00',what:'Precast panels P-14 to P-22',from:'IBS Precast Sdn Bhd',st:'Expected'}
+  ],
+  mr:[
+    {id:'MR-1207',m:'Rebar Y16 · 40 t',by:'Rebar foreman',need:'21 Oct',st:'Pending'},
+    {id:'MR-1206',m:'Plywood 18mm · 200 sheets',by:'Formwork foreman',need:'23 Oct',st:'Pending'},
+    {id:'MR-1205',m:'Waterproofing membrane · 60 rolls',by:'Finishes engineer',need:'28 Oct',st:'Approved'}
+  ],
+  plant:[
+    {n:'Tower crane TC-1 (Potain MCT 205)',cert:'DOSH PMA',due:'2027-02-11',st:'Operating',h:'7.2 h today'},
+    {n:'Passenger hoist PH-1',cert:'DOSH PMA',due:'2026-10-24',st:'Operating',h:'Inspection in 8 days'},
+    {n:'Excavator EX-03 (20 t)',cert:'Service',due:'2026-10-18',st:'Idle',h:'Service in 2 days'},
+    {n:'Concrete pump truck CP-2',cert:'Service',due:'2026-12-02',st:'Operating',h:'Pouring L12'},
+    {n:'Generator GS-1 (250 kVA)',cert:'Service',due:'2026-10-15',st:'Breakdown',h:'Overdue 1 day'}
+  ],
+  aps:[
+    {z:'Site office (container)',ap:'AP-01',sig:-48,cl:34,st:'Online'},
+    {z:'Ground / Gate / Hoist',ap:'AP-02',sig:-55,cl:61,st:'Online'},
+    {z:'Level 6 core',ap:'AP-03',sig:-63,cl:22,st:'Online'},
+    {z:'Level 11 core',ap:'AP-04',sig:-71,cl:18,st:'Weak'},
+    {z:'Basement 1',ap:'AP-05',sig:0,cl:0,st:'Offline'}
+  ],
+  devices:[
+    {n:'CCTV cameras',c:'12 / 12 online',s:'ok'},
+    {n:'Gate turnstiles (face ID)',c:'2 / 2 online',s:'ok'},
+    {n:'Crane anemometer',c:'Wind 7.4 m/s · limit 20',s:'ok'},
+    {n:'Dust & noise monitor',c:'PM10 118 µg/m³ · 71 dB',s:'warn'},
+    {n:'Hoist load sensor',c:'Online',s:'ok'},
+    {n:'Basement water-level sensor',c:'No signal (AP-05 down)',s:'bad'}
+  ]
+};
+
+/* ---------- state ---------- */
+let S = {role:'manager', view:'home', safetyTab:'hazards', opsTab:'diary', bqTab:'bq', dwgFilter:'All', toolbox:false, checkedIn:false};
+try{const r=localStorage.getItem('sitelink.role'); if(r) S.role=r;}catch(e){}
+$('#role').value=S.role;
+
+const NAV = [
+  {k:'home',l:'Overview',i:'home',grp:'Project'},
+  {k:'safety',l:'Safety',i:'safety',badge:()=>D.hazards.filter(h=>h.st==='Open').length},
+  {k:'ops',l:'Site operations',i:'ops'},
+  {k:'design',l:'Drawings & design',i:'design'},
+  {k:'bq',l:'BQ & cost',i:'bq',grp:'Commercial'},
+  {k:'mat',l:'Materials',i:'mat'},
+  {k:'plant',l:'Plant & equipment',i:'plant',grp:'Site'},
+  {k:'net',l:'Site network',i:'net'},
+  {k:'map',l:'Feature map',i:'map',grp:'About this draft'}
+];
+const ROLE_NAV = {
+  office:['home','safety','ops','design','bq','mat','map'],
+  manager:['home','safety','ops','design','bq','mat','plant','net','map'],
+  worker:['home','safety','ops','design','map'],
+  it:['home','net','plant','safety','map']
+};
+const ROLE_NAME = {office:'Head office / Client',manager:'Site manager',worker:'Worker / Subcon',it:'Site IT admin'};
+
+function renderNav(){
+  const allowed = ROLE_NAV[S.role];
+  if(!allowed.includes(S.view)) S.view='home';
+  let h='', lastGrp=null;
+  NAV.filter(n=>allowed.includes(n.k)).forEach(n=>{
+    if(n.grp && n.grp!==lastGrp){h+=`<div class="grp">${n.grp}</div>`; lastGrp=n.grp;}
+    const b = n.badge ? n.badge() : 0;
+    h+=`<button type="button" data-go="${n.k}" ${S.view===n.k?'aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${I[n.i]}</svg>${n.l}${b?`<span class="badge">${b}</span>`:''}</button>`;
+  });
+  $('#nav').innerHTML=h;
+}
+
+/* ---------- helpers ---------- */
+const pill = (txt) => {
+  const map = {ok:['Active','Online','Operating','On track','Closed','Approved','IFC','Answered','Expected','Done'],
+               warn:['In action','Pending','Pending approval','Weak','At risk','Idle','For approval','Comments','Submitted','Rectification','In progress'],
+               bad:['Open','Delayed','Offline','Breakdown','Superseded'],
+               info:['Draft','Not started']};
+  const cls = Object.keys(map).find(k=>map[k].includes(txt))||'';
+  return `<span class="pill ${cls}">${esc(txt)}</span>`;
+};
+const kpi = (l,v,d,cls='') => `<div class="kpi ${cls}"><span class="l">${l}</span><span class="v">${v}</span>${d?`<span class="d">${d}</span>`:''}</div>`;
+const tabs = (key, list) => `<div class="tabs" role="tablist">${list.map(([k,l])=>`<button type="button" role="tab" data-tab="${key}:${k}" aria-selected="${S[key]===k}">${l}</button>`).join('')}</div>`;
+const demo = () => `<div class="demo"><b>Draft prototype.</b> All names, figures and records are sample data. Switch “Viewing as” to see each user's version. <button type="button" class="link" data-go="map">See the full feature map</button></div>`;
+
+function bqTotals(){
+  let contract=0, done=0;
+  D.bq.forEach(s=>s.items.forEach(i=>{const a=i[3]*i[4]; contract+=a; done+=a*i[5]/100;}));
+  return {contract, done};
+}
+
+function sCurve(){
+  const plan=[0,2,5,9,14,20,27,35,43,51,59,66,72,78,84,89,93,96,98,100];
+  const act =[0,1.5,4,8,13,18,24,31,38,46,53,59.5,64.2];
+  const W=560,H=220,L=36,R=12,T=12,B=26, n=plan.length-1;
+  const x=i=>L+(W-L-R)*i/n, y=v=>T+(H-T-B)*(1-v/100);
+  const line=a=>a.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  let g=''; [0,25,50,75,100].forEach(v=>{g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${y(v)+3}" text-anchor="end">${v}%</text>`;});
+  const months=['Apr 25','Oct 25','Apr 26','Oct 26','Apr 27','Nov 27'];
+  [0,6,12,18].forEach((i,k)=>{g+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle">${months[k*1]}</text>`;});
+  g+=`<text x="${x(n)}" y="${H-8}" text-anchor="end">Nov 27</text>`;
+  const li=act.length-1;
+  const area=`${L},${y(0)} ${line(act)} ${x(li)},${y(0)}`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="S-curve: planned 72% versus actual 64.2% at month 12">${g}
+    <polygon points="${area}" fill="var(--primary)" opacity=".1"/>
+    <polyline points="${line(plan)}" fill="none" stroke="var(--plan)" stroke-width="2" stroke-dasharray="5 4"/>
+    <polyline points="${line(act)}" fill="none" stroke="var(--primary)" stroke-width="2.5"/>
+    <line x1="${x(li)}" x2="${x(li)}" y1="${T}" y2="${H-B}" stroke="var(--hivis)" stroke-width="1.5"/>
+    <circle cx="${x(li)}" cy="${y(act[li])}" r="4.5" fill="var(--primary)"/>
+    <text x="${x(li)+7}" y="${y(act[li])+14}" style="fill:var(--fg)">64.2%</text>
+    <text x="${x(12)+7}" y="${y(plan[12])-6}">plan 72%</text>
+  </svg>`;
+}
+
+/* ---------- views ---------- */
+const V = {};
+
+V.home = () => {
+  const t=bqTotals();
+  if(S.role==='office') return `
+    <div class="head"><div><span class="eyebrow">Head office · Portfolio view</span><h1>Residensi Melati — Block B</h1><p class="sub">Contract period Apr 2025 – Nov 2027 · Main contractor view for directors and the client's representative</p></div>
+      <button class="btn" type="button" data-toast="Monthly progress report queued (demo)">Generate monthly report</button></div>
+    ${demo()}
+    <div class="grid g4">
+      ${kpi('Physical progress','64.2<small>%</small>','<span class="down">▼ 7.8% behind plan (72%)</span>','caution')}
+      ${kpi('Work done to date',RMk(t.done),`of ${RMk(t.contract)} contract sum`)}
+      ${kpi('Days without lost-time injury','212','<span class="up">Safe man-hours: 486,300</span>')}
+      ${kpi('Approved variations',RMk(286400),'2 more pending · net +RM 55k')}
+    </div>
+    <div class="grid g2">
+      <div class="panel chart"><div class="ph"><h2>Progress S-curve</h2><div class="legend"><span><i style="background:var(--primary)"></i>Actual</span><span><i style="background:var(--plan)"></i>Planned</span><span><i style="background:var(--hivis)"></i>Today</span></div></div>${sCurve()}
+        <p class="sub" style="margin:0">Main slippage: precast façade installation (31% vs 48% planned) and M&E first fix.</p></div>
+      <div class="panel"><div class="ph"><h2>Needs your decision</h2></div><div class="list">
+        <div class="li"><span class="sev warn"></span><div class="t"><b>VO-08 · Lobby flooring upgrade</b><p>+RM 94,200 · submitted by QS 3 days ago</p></div><button class="btn sm pri" type="button" data-toast="VO-08 approved (demo)">Approve</button></div>
+        <div class="li"><span class="sev warn"></span><div class="t"><b>Progress claim #12</b><p>RM 3.84M gross · certified by consultant QS on 14 Oct</p></div><button class="btn sm" type="button" data-go="bq">Review</button></div>
+        <div class="li"><span class="sev bad"></span><div class="t"><b>Extension of time request — 21 days</b><p>Reason: precast supplier delay, Sept heavy rain</p></div><button class="btn sm" type="button" data-toast="EOT request opened (demo)">Open</button></div>
+      </div></div>
+    </div>
+    <div class="grid g3">
+      <div class="panel"><h3>Safety this month</h3><div class="list">
+        <div class="li"><div class="t">Hazard observations</div><span class="num">37</span></div>
+        <div class="li"><div class="t">Near misses</div><span class="num">2</span></div>
+        <div class="li"><div class="t">Toolbox talk attendance</div><span class="num">94%</span></div></div></div>
+      <div class="panel"><h3>Manpower on site today</h3><span class="big">159</span><p class="sub" style="margin:0">Peak this month 172 · 7 trades · 11 subcontractors</p></div>
+      <div class="panel"><h3>Open RFIs / NCRs</h3><span class="big">2 <small style="font-size:18px;color:var(--muted)">/ 1</small></span><p class="sub" style="margin:0">Oldest RFI: 6 days (C&S consultant)</p></div>
+    </div>`;
+
+  if(S.role==='worker') return `
+    <div class="head"><div><span class="eyebrow">Thursday, 16 Oct 2026 · Formwork gang B</span><h1>Selamat pagi, Rahim</h1><p class="sub">Your work today: Level 12 slab formwork, Zone A</p></div></div>
+    ${demo()}
+    <div class="hero-cta"><h2>See something unsafe?</h2><p style="margin:0">Report it in 30 seconds. Add a photo, pick the level, and the safety officer gets it straight away.</p><button class="btn" type="button" data-report>Report hazard</button></div>
+    <div class="grid g2">
+      <div class="panel"><div class="ph"><h2>Site check-in</h2>${S.checkedIn?pill('On track').replace('On track','Checked in'):''}</div>
+        <div class="checkin"><div><span class="big num">${S.checkedIn?'07:02':'--:--'}</span><p class="sub" style="margin:0">${S.checkedIn?'Gate 1 · face ID':'Scan at gate turnstile, or check in here'}</p></div>
+        <button class="btn pri" type="button" data-checkin ${S.checkedIn?'disabled':''}>${S.checkedIn?'Checked in':'Check in now'}</button></div></div>
+      <div class="panel"><div class="ph"><h2>Today's toolbox talk</h2>${S.toolbox?pill('Done'):pill('Pending')}</div>
+        <p style="margin:0"><b>Working at height: edge protection & harness anchoring</b><br><span class="sub">07:15 · Assembly area · Siti Aminah (SHO) · BM / EN / বাংলা / Tiếng Việt</span></p>
+        <button class="btn ${S.toolbox?'':'pri'}" type="button" data-toolbox ${S.toolbox?'disabled':''}>${S.toolbox?'Attendance recorded':'I attended this talk'}</button></div>
+    </div>
+    <div class="grid g2">
+      <div class="panel"><h2>My permits</h2><div class="list">
+        <div class="li"><span class="sev ok"></span><div class="t"><b>PTW-0388 · Work at height</b><p>Valid until 17:30 · Façade L14–L16</p></div>${pill('Active')}</div></div></div>
+      <div class="panel"><h2>My documents</h2><div class="list">
+        <div class="li"><div class="t"><b>CIDB Green Card</b><p>Expires 12 Mar 2027</p></div>${pill('Active')}</div>
+        <div class="li"><div class="t"><b>Work at height training</b><p>Completed 03 Feb 2026</p></div>${pill('Active')}</div>
+        <div class="li"><div class="t"><b>Payslip — September</b><p>Issued by subcontractor</p></div><button class="btn sm" type="button" data-toast="Payslip view (demo)">View</button></div></div></div>
+    </div>`;
+
+  if(S.role==='it') return V.net(true);
+
+  // site manager
+  const mp=D.manpower.reduce((a,b)=>a+b[1],0);
+  return `
+    <div class="head"><div><span class="eyebrow">Thursday, 16 Oct 2026 · Day 560 of 945</span><h1>Today on site</h1><p class="sub">AM fine, PM thunderstorm forecast 15:00–17:00. Plan concrete pour to finish before 14:30.</p></div>
+      <button class="btn pri" type="button" data-go="ops">Open daily diary</button></div>
+    ${demo()}
+    <div class="grid g4">
+      ${kpi('Workers on site',mp,'<span class="up">+6 vs yesterday</span>')}
+      ${kpi('Active permits','3','1 confined space awaiting your approval','caution')}
+      ${kpi('Open hazards',D.hazards.filter(h=>h.st==='Open').length,'Edge protection L12 · high severity','alert')}
+      ${kpi('Deliveries today',D.deliveries.length,'Ready-mix in progress')}
+    </div>
+    <div class="grid g2">
+      <div class="panel"><div class="ph"><h2>Lookahead · next 3 weeks</h2><button class="btn sm" type="button" data-go="ops" data-tab2="opsTab:tasks">All tasks</button></div>${taskTable(D.tasks.slice(0,4))}</div>
+      <div class="panel"><div class="ph"><h2>Waiting on you</h2></div><div class="list">
+        <div class="li"><span class="sev warn"></span><div class="t"><b>PTW-0391 · Confined space, sump pit B2</b><p>Gas test done 08:40 · standby person assigned</p></div><button class="btn sm pri" type="button" data-toast="PTW-0391 approved (demo)">Approve</button></div>
+        <div class="li"><span class="sev warn"></span><div class="t"><b>MR-1207 · Rebar Y16 40 t</b><p>Y16 stock below minimum (18.5 t of 25 t)</p></div><button class="btn sm" type="button" data-go="mat">Review</button></div>
+        <div class="li"><span class="sev bad"></span><div class="t"><b>Generator GS-1 breakdown</b><p>Service overdue 1 day · backup set on hire?</p></div><button class="btn sm" type="button" data-go="plant">View</button></div>
+        <div class="li"><span class="sev warn"></span><div class="t"><b>Green card expiring · 3 workers</b><p>Ravi S. expires in 4 days</p></div><button class="btn sm" type="button" data-go="safety" data-tab2="safetyTab:people">View</button></div>
+      </div></div>
+    </div>`;
+};
+
+function taskTable(rows){
+  return `<div class="tbl"><table><thead><tr><th>Week</th><th>Activity</th><th>Who</th><th>Progress</th><th>Status</th></tr></thead><tbody>
+  ${rows.map(r=>`<tr><td class="tag">${r.w}</td><td>${r.t}</td><td class="sub">${r.who}</td><td><div class="bar ${r.st==='Delayed'?'low':r.st==='At risk'?'mid':''}"><i style="width:${r.p}%"></i></div><span class="tag">${r.p}%</span></td><td>${pill(r.st)}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+V.safety = () => {
+  const ro = S.role==='worker' || S.role==='it';
+  let body='';
+  if(S.safetyTab==='hazards') body = `<div class="list">${D.hazards.map(h=>`<div class="li"><span class="sev ${h.sev}"></span><div class="t"><b>${esc(h.t)}</b><p><span class="tag">${h.id}</span> · ${esc(h.loc)} · reported by ${esc(h.by)}</p></div><span class="when">${h.when}</span>${pill(h.st)}</div>`).join('')}</div>`;
+  if(S.safetyTab==='permits') body = `<div class="tbl"><table><thead><tr><th>Permit</th><th>Type</th><th>Area</th><th>Holder</th><th>Valid until</th><th>Status</th></tr></thead><tbody>${D.permits.map(p=>`<tr><td class="tag">${p.id}</td><td>${p.type}</td><td>${p.area}</td><td class="sub">${p.holder}</td><td class="num">${p.until}</td><td>${pill(p.st)}</td></tr>`).join('')}</tbody></table></div>`;
+  if(S.safetyTab==='toolbox') body = `<div class="list">
+    <div class="li"><div class="t"><b>Working at height: edge protection & harness anchoring</b><p>Today 07:15 · 148 of 159 workers signed · 4 languages</p></div><div class="bar" style="width:120px"><i style="width:93%"></i></div></div>
+    <div class="li"><div class="t"><b>Heat stress & hydration</b><p>15 Oct · 151 of 153 signed</p></div><div class="bar" style="width:120px"><i style="width:99%"></i></div></div>
+    <div class="li"><div class="t"><b>Lifting operations: signaller & exclusion zone</b><p>14 Oct · 139 of 150 signed</p></div><div class="bar" style="width:120px"><i style="width:93%"></i></div></div></div>`;
+  if(S.safetyTab==='people') body = `<div class="tbl"><table><thead><tr><th>Worker</th><th>Trade</th><th>CIDB green card expiry</th><th class="n">Days left</th><th></th></tr></thead><tbody>${D.greencard.sort((a,b)=>a.days-b.days).map(g=>`<tr><td>${g.n}</td><td class="sub">${g.trade}</td><td class="num">${g.exp}</td><td class="n" style="color:${g.days<7?'var(--bad)':'var(--warn)'}">${g.days}</td><td><button class="btn sm" type="button" data-toast="Renewal reminder logged for ${g.n} (demo)">Remind</button></td></tr>`).join('')}</tbody></table></div><p class="sub" style="margin:0">Workers with an expired card are blocked at the gate turnstile automatically.</p>`;
+  if(S.safetyTab==='incidents') body = `<div class="list">
+    <div class="li"><span class="sev warn"></span><div class="t"><b>Near miss: plywood sheet blown off L11 during gust</b><p>02 Oct · No injury · Root cause: unsecured stack · Action: tie-down rule added to checklist</p></div>${pill('Closed')}</div>
+    <div class="li"><span class="sev warn"></span><div class="t"><b>First aid: cut to hand from rebar end</b><p>21 Sep · Rebar caps now mandatory at L10+</p></div>${pill('Closed')}</div></div>
+    <p class="sub" style="margin:0">Reportable accidents generate a draft JKKP notification form for the safety officer to review and submit to DOSH.</p>`;
+  return `
+    <div class="head"><div><span class="eyebrow">Safety & health</span><h1>Safety</h1><p class="sub">Hazards, permits to work, toolbox talks, worker competency and incidents in one place.</p></div>
+      <button class="btn hv" type="button" data-report>＋ Report hazard</button></div>
+    <div class="grid g4">
+      ${kpi('Days without LTI','212','Last LTI: 18 Mar 2026')}
+      ${kpi('Safe man-hours','486,300','<span class="up">+1,272 today</span>')}
+      ${kpi('Open hazards',D.hazards.filter(h=>h.st==='Open').length,'Target: close within 24 h','alert')}
+      ${kpi('Active permits','3','1 pending approval','caution')}
+    </div>
+    <div class="panel">
+      ${tabs('safetyTab',[['hazards','Hazard reports'],['permits','Permits to work'],['toolbox','Toolbox talks'],['people','Worker competency'],['incidents','Incidents']])}
+      ${body}
+      ${ro&&S.safetyTab==='permits'?'<p class="sub" style="margin:0">Only the site manager and safety officer can approve permits.</p>':''}
+    </div>`;
+};
+
+V.ops = () => {
+  let body='';
+  if(S.opsTab==='diary'){
+    const mp=D.manpower.reduce((a,b)=>a+b[1],0), max=Math.max(...D.manpower.map(m=>m[1]));
+    body = `<div class="grid g2">
+      <div class="panel"><h3>Weather & working hours</h3><div class="list">
+        <div class="li"><div class="t">07:00–12:00</div><span>Fine, 31 °C</span></div>
+        <div class="li"><div class="t">12:00–15:00</div><span>Cloudy</span></div>
+        <div class="li"><div class="t">15:00–17:00 <span class="sub">(forecast)</span></div><span style="color:var(--warn)">Thunderstorm · crane stop if wind &gt; 20 m/s</span></div></div></div>
+      <div class="panel"><h3>Manpower by trade · <span class="num">${mp}</span></h3>
+        <div class="list">${D.manpower.map(m=>`<div class="li" style="align-items:center"><div class="t">${m[0]}</div><div class="bar" style="width:45%"><i style="width:${m[1]/max*100}%"></i></div><span class="num" style="width:28px;text-align:right">${m[1]}</span></div>`).join('')}</div></div>
+      <div class="panel"><h3>Work done today</h3><ul style="margin:0;padding-left:18px">
+        <li>Concrete pour L12 slab Zone A: 96 m³ G40, cubes taken (6 nos.)</li>
+        <li>Precast panels P-10 to P-13 installed, east façade L10</li>
+        <li>Brickwork L6 units 6-01 to 6-04</li>
+        <li>Scaffold inspection L14–L16 passed (tagged green)</li></ul></div>
+      <div class="panel"><h3>Site photos</h3><div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px">
+        ${['L12 pour','Façade L10','Scaffold L15'].map((c,i)=>`<div style="aspect-ratio:4/3;max-width:100%;border-radius:4px;background:repeating-linear-gradient(${45+i*30}deg,var(--surface-2) 0 8px,var(--line) 8px 9px);display:flex;align-items:flex-end;padding:6px;font-size:11px;color:var(--muted)">${c}</div>`).join('')}</div>
+        <button class="btn sm" type="button" data-toast="Photo upload (demo)">Add photos</button></div></div>`;
+  }
+  if(S.opsTab==='tasks') body = `<div class="panel">${taskTable(D.tasks)}</div>`;
+  if(S.opsTab==='rfi') body = `<div class="grid g2">
+    <div class="panel"><h3>Requests for information</h3><div class="list">${D.rfi.map(r=>`<div class="li"><div class="t"><b>${r.t}</b><p><span class="tag">${r.id}</span> · to ${r.to} · ${r.age} days</p></div>${pill(r.st)}</div>`).join('')}</div></div>
+    <div class="panel"><h3>Non-conformance & defects</h3><div class="list">${D.ncr.map(r=>`<div class="li"><div class="t"><b>${r.t}</b><p><span class="tag">${r.id}</span> · ${r.trade}</p></div>${pill(r.st)}</div>`).join('')}</div>
+      <p class="sub" style="margin:0">Defects are pinned on the floor plan with photos and assigned to the responsible subcontractor.</p></div></div>`;
+  if(S.opsTab==='inspect') body = `<div class="panel"><h3>Inspection & test plans (ITP)</h3><div class="tbl"><table><thead><tr><th>Request</th><th>Element</th><th>Inspector</th><th>Time</th><th>Result</th></tr></thead><tbody>
+    <tr><td class="tag">RFA-311</td><td>Rebar L12 slab Zone A (before pour)</td><td class="sub">C&S Resident Engineer</td><td class="num">07:30</td><td>${pill('Approved')}</td></tr>
+    <tr><td class="tag">RFA-312</td><td>Formwork L13 columns</td><td class="sub">Clerk of Works</td><td class="num">14:00</td><td>${pill('Pending')}</td></tr>
+    <tr><td class="tag">RFA-309</td><td>Waterproofing L7 wet areas (ponding test)</td><td class="sub">Architect</td><td class="num">Yesterday</td><td>${pill('Approved')}</td></tr></tbody></table></div></div>`;
+  return `
+    <div class="head"><div><span class="eyebrow">Site operations</span><h1>Daily site diary</h1><p class="sub">Thursday, 16 Oct 2026 · prepared by Site Manager · ${S.role==='office'?'read-only for head office':'auto-filled from gate check-ins, deliveries and permits'}</p></div>
+      ${S.role==='manager'?'<button class="btn pri" type="button" data-toast="Diary submitted to project manager (demo)">Submit diary</button>':''}</div>
+    ${tabs('opsTab',[['diary','Diary'],['tasks','Lookahead schedule'],['rfi','RFI & defects'],['inspect','Inspections']])}
+    ${body}`;
+};
+
+V.design = () => {
+  const f=S.dwgFilter, rows=D.drawings.filter(d=>f==='All'||d.d===f);
+  return `
+    <div class="head"><div><span class="eyebrow">Architecture & engineering</span><h1>Drawings & design</h1><p class="sub">One drawing register for site, office and consultants. The site always works from the latest issued-for-construction revision.</p></div>
+      ${S.role!=='worker'?'<button class="btn pri" type="button" data-toast="Upload drawing (demo)">Upload revision</button>':''}</div>
+    <div class="grid g4">
+      ${kpi('Drawings in register','1,284','ARC 512 · STR 398 · MEP 301 · Shop 73')}
+      ${kpi('Awaiting approval','17','Oldest: 9 days','caution')}
+      ${kpi('Superseded this month','42','Site copies auto-flagged')}
+      ${kpi('Open design RFIs','2','Linked to 3 drawings')}
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="chips">${['All','ARC','STR','MEP','Shop'].map(c=>`<button type="button" class="chip" data-dwg="${c}" aria-pressed="${f===c}">${c==='Shop'?'Shop drawings':c}</button>`).join('')}</div><span class="sub" style="font-size:12px">Click a drawing for revision history</span></div>
+      <div class="tbl"><table><thead><tr><th>Drawing no.</th><th>Title</th><th>Disc.</th><th>Rev</th><th>Issued</th><th>Status</th></tr></thead><tbody>
+        ${rows.map(d=>`<tr class="click" data-dwgopen="${d.no}" tabindex="0"><td class="tag">${d.no}</td><td>${d.ti}</td><td class="sub">${d.d}</td><td class="num">${d.rev}</td><td class="num">${d.dt}</td><td>${pill(d.st)}</td></tr>`).join('')}
+      </tbody></table></div>
+    </div>
+    <div class="grid g3">
+      <div class="panel"><h3>Mark-up on site</h3><p class="sub" style="margin:0">Sketch on a drawing from a tablet, pin a photo, and raise an RFI linked to that grid line.</p></div>
+      <div class="panel"><h3>BIM model viewer</h3><p class="sub" style="margin:0">View the IFC model by level; tap an element to see its drawings, BQ item and inspection status.</p></div>
+      <div class="panel"><h3>Submissions tracker</h3><p class="sub" style="margin:0">Material and shop-drawing submissions with consultant comments and turnaround days.</p></div>
+    </div>`;
+};
+
+V.bq = () => {
+  const t=bqTotals();
+  let body='';
+  if(S.bqTab==='bq'){
+    let rows='';
+    D.bq.forEach(s=>{
+      rows+=`<tr class="sec"><td colspan="7">${s.sec}</td></tr>`;
+      s.items.forEach(i=>{const a=i[3]*i[4]; rows+=`<tr><td class="tag">${i[0]}</td><td>${i[1]}</td><td class="sub">${i[2]}</td><td class="n">${i[3].toLocaleString('en-MY')}</td><td class="n">${i[4].toLocaleString('en-MY',{minimumFractionDigits:2})}</td><td class="n">${a.toLocaleString('en-MY',{minimumFractionDigits:2})}</td><td><div class="bar ${i[5]<30?'mid':''}"><i style="width:${i[5]}%"></i></div><span class="tag">${i[5]}%</span></td></tr>`;});
+    });
+    body=`<div class="panel"><div class="tbl"><table><thead><tr><th>Item</th><th>Description</th><th>Unit</th><th class="n">Qty</th><th class="n">Rate (RM)</th><th class="n">Amount (RM)</th><th>Done</th></tr></thead><tbody>${rows}</tbody>
+      <tfoot><tr><td></td><td>Contract sum (sample extract)</td><td></td><td></td><td></td><td class="n">${t.contract.toLocaleString('en-MY',{minimumFractionDigits:2})}</td><td></td></tr></tfoot></table></div>
+      <p class="sub" style="margin:0">Measured to SMM2. Each line links to the drawings it was measured from and to the materials ordered against it.</p></div>`;
+  }
+  if(S.bqTab==='vo') body=`<div class="panel"><div class="tbl"><table><thead><tr><th>VO</th><th>Description</th><th class="n">Amount (RM)</th><th>Status</th></tr></thead><tbody>${D.vo.map(v=>`<tr><td class="tag">${v.id}</td><td>${v.t}</td><td class="n" style="color:${v.amt<0?'var(--ok)':'inherit'}">${v.amt.toLocaleString('en-MY',{minimumFractionDigits:2})}</td><td>${pill(v.st)}</td></tr>`).join('')}</tbody></table></div></div>`;
+  if(S.bqTab==='claims') body=`<div class="panel"><div class="tbl"><table><thead><tr><th>Claim</th><th>Period</th><th class="n">Gross work done</th><th class="n">Retention (5%)</th><th class="n">This claim</th><th>Status</th></tr></thead><tbody>
+    <tr><td class="tag">PC #12</td><td>Sep 2026</td><td class="n">${RM(t.done)}</td><td class="n">${RM(Math.min(t.done*0.05,t.contract*0.05))}</td><td class="n">RM 3,842,600.00</td><td>${pill('Submitted')}</td></tr>
+    <tr><td class="tag">PC #11</td><td>Aug 2026</td><td class="n">RM 50,128,400.00</td><td class="n">RM 2,506,420.00</td><td class="n">RM 3,511,900.00</td><td>${pill('Approved')}</td></tr>
+    <tr><td class="tag">PC #10</td><td>Jul 2026</td><td class="n">RM 46,431,000.00</td><td class="n">RM 2,321,550.00</td><td class="n">RM 3,977,200.00</td><td>${pill('Approved')}</td></tr></tbody></table></div>
+    <p class="sub" style="margin:0">Claims are built from progress recorded on BQ items, checked against site diary and inspection records.</p></div>`;
+  return `
+    <div class="head"><div><span class="eyebrow">Quantity surveying</span><h1>BQ & cost control</h1><p class="sub">Bill of quantities, progress valuation, variation orders and payment claims.</p></div>
+      ${S.role==='manager'?'<button class="btn pri" type="button" data-toast="Valuation for October started (demo)">Start October valuation</button>':''}</div>
+    <div class="grid g4">
+      ${kpi('Contract sum (extract)',RMk(t.contract),'Lump sum, PAM 2018 form')}
+      ${kpi('Work done to date',RMk(t.done),`${(t.done/t.contract*100).toFixed(1)}% by value`)}
+      ${kpi('Cost to date vs budget','−2.1%','<span class="up">Under budget</span>')}
+      ${kpi('Net variations','+RM 341,850','3 VOs · 1 approved')}
+    </div>
+    ${tabs('bqTab',[['bq','Bill of quantities'],['vo','Variation orders'],['claims','Progress claims']])}
+    ${body}`;
+};
+
+V.mat = () => `
+  <div class="head"><div><span class="eyebrow">Procurement & logistics</span><h1>Materials</h1><p class="sub">Stock on site, deliveries, material requests and wastage, linked to BQ quantities.</p></div>
+    ${S.role!=='office'?'<button class="btn pri" type="button" data-toast="New material request (demo)">New request</button>':''}</div>
+  <div class="grid g2">
+    <div class="panel"><h2>Stock on site</h2><div class="tbl"><table><thead><tr><th>Material</th><th class="n">On site</th><th>Level</th><th></th></tr></thead><tbody>
+      ${D.stock.map(s=>{const pct=Math.min(100,s.on/s.max*100), low=s.on<s.min; return `<tr><td>${s.m}<br><span class="tag">min ${s.min} ${s.u}</span></td><td class="n">${s.on} <span class="tag">${s.u}</span></td><td style="width:30%"><div class="bar ${low?'low':''}"><i style="width:${pct}%"></i></div></td><td>${low?pill('Delayed').replace('Delayed','Below min'):''}</td></tr>`;}).join('')}
+    </tbody></table></div></div>
+    <div class="panel"><h2>Deliveries today</h2><div class="list">${D.deliveries.map(d=>`<div class="li"><span class="when">${d.time}</span><div class="t"><b>${d.what}</b><p>${d.from}</p></div>${pill(d.st)}</div>`).join('')}</div>
+      <p class="sub" style="margin:0">Storekeeper scans the delivery order (DO) and checks quantity against the PO on arrival.</p></div>
+  </div>
+  <div class="panel"><div class="ph"><h2>Material requests</h2></div><div class="tbl"><table><thead><tr><th>Request</th><th>Material</th><th>Requested by</th><th>Needed</th><th>Status</th><th></th></tr></thead><tbody>
+    ${D.mr.map((r,i)=>`<tr><td class="tag">${r.id}</td><td>${r.m}</td><td class="sub">${r.by}</td><td class="num">${r.need}</td><td>${pill(r.st)}</td><td>${r.st==='Pending'&&S.role==='manager'?`<button class="btn sm pri" type="button" data-approve-mr="${i}">Approve</button>`:''}</td></tr>`).join('')}
+  </tbody></table></div></div>
+  <div class="grid g3">
+    ${kpi('Concrete: ordered vs BQ','6,284 / 9,800 m³','Wastage 2.4% · target 3%')}
+    ${kpi('Rebar: delivered vs BQ','1,012 / 1,520 t','Wastage 3.9% · target 3%','caution')}
+    ${kpi('Open purchase orders','RM 1.26M','14 POs · 3 overdue')}
+  </div>`;
+
+V.plant = () => `
+  <div class="head"><div><span class="eyebrow">Plant & machinery</span><h1>Plant & equipment</h1><p class="sub">Machine status, hours, servicing and DOSH certificates (PMA) for lifting equipment.</p></div></div>
+  <div class="panel"><div class="tbl"><table><thead><tr><th>Equipment</th><th>Certificate / service</th><th>Due</th><th>Note</th><th>Status</th></tr></thead><tbody>
+    ${D.plant.map(p=>`<tr><td>${p.n}</td><td class="sub">${p.cert}</td><td class="num">${p.due}</td><td class="sub">${p.h}</td><td>${pill(p.st)}</td></tr>`).join('')}
+  </tbody></table></div>
+  <p class="sub" style="margin:0">Daily pre-use checklists are filled by operators on their phone. A failed check locks the machine out until a supervisor clears it.</p></div>`;
+
+V.net = (asHome) => `
+  <div class="head"><div><span class="eyebrow">${asHome?'Site IT · Today':'Connectivity'}</span><h1>Site network</h1><p class="sub">Temporary site Wi-Fi, CCTV and IoT sensors. Coverage moves up the building as floors are cast.</p></div>
+    <button class="btn" type="button" data-toast="Guest Wi-Fi voucher created: valid 8 h (demo)">Create guest voucher</button></div>
+  ${asHome?demo():''}
+  <div class="grid g4">
+    ${kpi('Access points online','3 / 5','AP-05 Basement 1 offline','alert')}
+    ${kpi('Connected devices','135','Phones, tablets, cameras, sensors')}
+    ${kpi('Internet uplink','4G + fibre','Fibre 300 Mbps · 4G failover ready')}
+    ${kpi('Data used today','38.6 GB','CCTV upload 71%')}
+  </div>
+  <div class="grid g2">
+    <div class="panel"><h2>Coverage by zone</h2><div class="tbl"><table><thead><tr><th>Zone</th><th>AP</th><th class="n">Signal</th><th class="n">Clients</th><th>Status</th></tr></thead><tbody>
+      ${D.aps.map(a=>`<tr><td>${a.z}</td><td class="tag">${a.ap}</td><td class="n">${a.sig?a.sig+' dBm':'—'}</td><td class="n">${a.cl}</td><td>${pill(a.st)}</td></tr>`).join('')}
+    </tbody></table></div><p class="sub" style="margin:0">Suggestion: move AP-03 to Level 13 core after the L13 slab is cast (week 44).</p></div>
+    <div class="panel"><h2>Site devices</h2><div class="list">${D.devices.map(d=>`<div class="li"><span class="sev ${d.s}"></span><div class="t"><b>${d.n}</b><p>${d.c}</p></div></div>`).join('')}</div></div>
+  </div>`;
+
+V.map = () => {
+  const F = [
+    ['Safety',['Hazard reporting with photo & location','Permit to work (height, hot work, lifting, confined space)','Toolbox talks with multilingual sign-in','CIDB green card & training expiry alerts','Incident & near-miss log, draft JKKP forms','Safety KPIs: LTI-free days, safe man-hours','PPE & scaffold inspection checklists'],['MVP','MVP','MVP','MVP','Phase 2','MVP','Phase 2']],
+    ['Site operations',['Daily site diary (weather, manpower, work done, photos)','Gate check-in / attendance (face ID turnstile)','3-week lookahead & master schedule','RFIs, NCRs and defect pinning on plans','Inspection requests (RFA / ITP)','Delay & EOT evidence log'],['MVP','MVP','MVP','MVP','Phase 2','Phase 2']],
+    ['Architecture & design',['Drawing register with revision control','Superseded-drawing alerts on site','Mark-up & RFI from a drawing','Shop drawing & material submissions','BIM / IFC model viewer'],['MVP','MVP','Phase 2','Phase 2','Phase 3']],
+    ['BQ & cost',['BQ import from Excel (SMM2 structure)','Progress measurement per BQ item','Variation orders & approvals','Monthly progress claims & retention','Cost vs budget, cash flow S-curve'],['MVP','MVP','MVP','Phase 2','Phase 2']],
+    ['Materials',['Material requests & approval','Delivery order check-in vs PO','Stock levels & minimum alerts','Wastage tracking vs BQ quantities','Supplier performance'],['MVP','MVP','MVP','Phase 2','Phase 3']],
+    ['Plant & equipment',['Equipment register & status','DOSH PMA certificate tracking','Operator daily pre-use checklist','Service schedule & breakdown log'],['Phase 2','Phase 2','Phase 2','Phase 2']],
+    ['Site network',['Access point status & coverage by zone','Guest Wi-Fi vouchers for visitors','CCTV & IoT sensor health','Wind, dust & noise alerts'],['MVP','Phase 2','Phase 2','Phase 3']],
+    ['Platform',['Role-based access for all four user types','Works offline, syncs when signal returns','Bahasa Malaysia, English, Bengali, Vietnamese, Nepali','Multi-project portfolio for head office','Audit trail & PDPA-compliant data handling'],['MVP','MVP','MVP','Phase 2','MVP']]
+  ];
+  return `
+    <div class="head"><div><span class="eyebrow">About this draft</span><h1>Feature map</h1><p class="sub">Everything proposed for the app, with a suggested release phase. MVP = first release for one pilot site.</p></div></div>
+    <div class="panel"><h2>Who uses what</h2><div class="tbl"><table><thead><tr><th>Module</th><th>Head office / Client</th><th>Site manager</th><th>Worker / Subcon</th><th>Site IT</th></tr></thead><tbody>
+      ${[['Safety','KPIs, incidents','Approve permits, close hazards','Report hazards, sign talks','Sensor alerts'],['Site operations','Read diary & progress','Write diary, schedule, RFIs','Check in, see tasks','—'],['Drawings','View, approve','Upload, distribute','View latest revision','—'],['BQ & cost','Approve VOs & claims','Record progress','—','—'],['Materials','Spend overview','Approve requests','Request materials (foreman)','—'],['Site network','—','Status','Connect','Full control']].map(r=>`<tr><td><b>${r[0]}</b></td>${r.slice(1).map(c=>`<td class="sub">${c}</td>`).join('')}</tr>`).join('')}
+    </tbody></table></div></div>
+    <div class="grid g3">${F.map(([t,items,ph])=>`<div class="panel feat"><h3>${t}</h3><ul>${items.map((it,i)=>`<li>${it}<span class="phase">${ph[i]}</span></li>`).join('')}</ul></div>`).join('')}</div>`;
+};
+
+/* ---------- render ---------- */
+function render(){
+  renderNav();
+  $('#view').innerHTML = V[S.view]();
+  const th=$('#top').offsetHeight; document.documentElement.style.setProperty('--toph',th+'px');
+}
+
+/* ---------- modal / toast ---------- */
+let toastT;
+function toast(msg){
+  clearTimeout(toastT);
+  let t=document.querySelector('.toast'); if(!t){t=document.createElement('div');t.className='toast';t.setAttribute('role','status');document.body.appendChild(t);}
+  t.textContent=msg; t.hidden=false; toastT=setTimeout(()=>{t.hidden=true;},3200);
+}
+function closeLayer(){ $('#layer').innerHTML=''; }
+function openModal(html){
+  $('#layer').innerHTML=`<div class="scrim" data-scrim><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;
+  const f=$('#layer').querySelector('input,select,textarea,button:not(.x)'); if(f) f.focus();
+}
+function reportModal(){
+  openModal(`<div class="mh"><h2>Report a hazard</h2><button class="x" type="button" data-close aria-label="Close">×</button></div>
+    <form id="hzForm">
+      <label class="f" for="hzWhat">What did you see?<textarea id="hzWhat" rows="3" required placeholder="e.g. Open edge with no guardrail at stairwell"></textarea></label>
+      <div class="row2">
+        <label class="f" for="hzLoc">Where<select id="hzLoc">${['Ground / Gate','Basement 1','Basement 2','Level 6','Level 10','Level 11','Level 12','Roof'].map(l=>`<option>${l}</option>`).join('')}</select></label>
+        <label class="f" for="hzType">Type<select id="hzType"><option>Fall from height</option><option>Falling object</option><option>Electrical</option><option>Housekeeping</option><option>Machinery / lifting</option><option>Other</option></select></label>
+      </div>
+      <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:12.5px;color:var(--muted);padding:0;margin-bottom:4px">How serious?</legend>
+        <div class="seg"><label><input type="radio" name="sev" value="ok" id="sevLow"> Low</label><label><input type="radio" name="sev" value="warn" id="sevMed" checked> Medium</label><label><input type="radio" name="sev" value="bad" id="sevHigh"> High: stop work</label></div></fieldset>
+      <label class="f" for="hzPhoto">Photo (optional)<input type="file" id="hzPhoto" accept="image/*"></label>
+      <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" type="button" data-close>Cancel</button><button class="btn hv" type="submit">Submit report</button></div>
+    </form>`);
+}
+function dwgModal(no){
+  const d=D.drawings.find(x=>x.no===no); if(!d) return;
+  openModal(`<div class="mh"><div><span class="tag">${d.no}</span><h2>${d.ti}</h2></div><button class="x" type="button" data-close aria-label="Close">×</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${pill(d.st)}<span class="pill">Rev ${d.rev}</span><span class="pill">${d.d}</span></div>
+    <div style="aspect-ratio:16/9;max-width:100%;border:1px solid var(--line);border-radius:4px;background:
+      linear-gradient(var(--line) 1px,transparent 1px) 0 0/24px 24px,linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/24px 24px,var(--surface-2);
+      display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Drawing preview</div>
+    <div><h3>Revision history</h3><ul style="margin:6px 0 0;padding-left:18px">${d.hist.map(h=>`<li class="sub">${h}</li>`).join('')}</ul></div>
+    <div><h3>Linked RFIs</h3><p class="sub" style="margin:4px 0 0">${d.rfi.length?d.rfi.join(', '):'None'}</p></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btn" type="button" data-toast="Mark-up mode (demo)">Mark up</button><button class="btn pri" type="button" data-toast="RFI draft created from ${d.no} (demo)">Raise RFI</button></div>`);
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', e=>{
+  const t=e.target.closest('button,[data-dwgopen],[data-scrim]'); if(!t) return;
+  if(t.matches('[data-scrim]') && e.target!==t) return;
+  if(t.dataset.scrim!==undefined || t.dataset.close!==undefined){closeLayer();return;}
+  if(t.dataset.go){ S.view=t.dataset.go; if(t.dataset.tab2){const [k,v]=t.dataset.tab2.split(':'); S[k]=v;} closeLayer(); render(); window.scrollTo(0,0); return; }
+  if(t.dataset.tab){ const [k,v]=t.dataset.tab.split(':'); S[k]=v; render(); return; }
+  if(t.dataset.dwg){ S.dwgFilter=t.dataset.dwg; render(); return; }
+  if(t.dataset.dwgopen){ dwgModal(t.dataset.dwgopen); return; }
+  if(t.dataset.report!==undefined || t.id==='reportBtn'){ reportModal(); return; }
+  if(t.dataset.toolbox!==undefined){ S.toolbox=true; render(); toast('Attendance recorded for today\'s toolbox talk'); return; }
+  if(t.dataset.checkin!==undefined){ S.checkedIn=true; render(); toast('Checked in at 07:02 (demo)'); return; }
+  if(t.dataset.approveMr){ D.mr[+t.dataset.approveMr].st='Approved'; render(); toast('Material request approved. Purchasing notified (demo)'); return; }
+  if(t.dataset.toast){ toast(t.dataset.toast); return; }
+});
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') closeLayer();
+  if(e.key==='Enter' && e.target.dataset && e.target.dataset.dwgopen) dwgModal(e.target.dataset.dwgopen);
+});
+document.addEventListener('submit', e=>{
+  if(e.target.id!=='hzForm') return;
+  e.preventDefault();
+  const what=$('#hzWhat').value.trim(); if(!what){ $('#hzWhat').focus(); return; }
+  const sev=(document.querySelector('input[name="sev"]:checked')||{}).value||'warn';
+  const id='HZ-0'+(142+D.hazards.length-3);
+  D.hazards.unshift({id,t:what,loc:$('#hzLoc').value,sev,by:'You',when:'Now',st:'Open'});
+  closeLayer(); S.view='safety'; S.safetyTab='hazards'; render();
+  toast(`${id} logged. It now shows in the safety officer's list (demo).`);
+});
+$('#role').addEventListener('change', e=>{
+  S.role=e.target.value; S.view='home';
+  try{localStorage.setItem('sitelink.role',S.role);}catch(err){}
+  render(); toast('Now viewing as '+ROLE_NAME[S.role]);
+});
+window.addEventListener('resize', ()=>{const th=$('#top').offsetHeight; document.documentElement.style.setProperty('--toph',th+'px');});
+
+render();
+})();
+</script>
