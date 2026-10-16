@@ -171,6 +171,38 @@ label.f input,label.f select,label.f textarea{background:var(--surface-2);border
 @media (max-width:480px){.row2{grid-template-columns:1fr}}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
 .seg label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:var(--r);padding:6px 10px;cursor:pointer;font-size:13px;color:var(--fg)}
+a.btn{text-decoration:none;color:inherit;justify-content:center}
+.modal.wide{width:min(920px,100%)}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+.fgrid .full{grid-column:1/-1}
+@media (max-width:560px){.fgrid{grid-template-columns:1fr}}
+.fsec{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+.fsec>h3{font-size:15px;text-transform:uppercase;letter-spacing:.05em;color:var(--primary)}
+.yn{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line)}
+.yn:last-child{border-bottom:0}
+.yn .q{flex:1 1 260px;min-width:0}
+.yn.miss .q{color:var(--bad)}
+.seg3{display:flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;flex:none}
+.seg3 label{display:flex;align-items:center;justify-content:center;min-width:52px;min-height:38px;padding:0 10px;cursor:pointer;font-size:13px;border-left:1px solid var(--line)}
+.seg3 label:first-child{border-left:0}
+.seg3 input{position:absolute;opacity:0;pointer-events:none}
+.seg3 label:has(input:checked){background:var(--primary);color:var(--on-primary)}
+.seg3 label.no:has(input:checked){background:var(--bad);color:var(--surface)}
+.seg3 label:has(input:focus-visible){outline:2px solid var(--primary);outline-offset:-2px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px 14px}
+.cgrid label{display:flex;gap:8px;align-items:center;min-height:34px;font-size:13.5px}
+.ftable input{width:100%;min-width:90px;background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:6px;font-size:13px;color:var(--fg)}
+.ftable td{padding:4px}
+.sig{display:flex;flex-direction:column;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:10px}
+.sig input{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:7px;font-size:14px;color:var(--fg)}
+.sigpad{width:100%;height:110px;background:var(--surface);border:1px dashed var(--line);border-radius:4px;touch-action:none;cursor:crosshair}
+.notebox{margin:0;background:var(--surface-2);border-radius:var(--r);padding:10px 12px;font-size:13.5px}
+.mx{display:grid;grid-template-columns:auto repeat(5,1fr);gap:3px;font-size:11.5px;text-align:center;font-family:var(--f-mono)}
+.mx span{padding:6px 2px;border-radius:3px}
+.mx .h{color:var(--muted);background:none}
+.mx .lo{background:var(--ok-soft);color:var(--ok)} .mx .md{background:var(--warn-soft);color:var(--warn)} .mx .hi{background:var(--bad-soft);color:var(--bad)}
+.formerr{background:var(--bad-soft);color:var(--bad);border-radius:var(--r);padding:10px 12px;font-size:13.5px}
+.formbar{display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:-20px;background:var(--surface);padding-block:12px;border-top:1px solid var(--line);margin-bottom:-20px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:var(--r);z-index:30;font-size:13.5px;max-width:calc(100% - 32px)}
 
 @media (max-width:860px){
@@ -224,6 +256,8 @@ label.f input,label.f select,label.f textarea{background:var(--surface-2);border
 
 <div id="layer"></div>
 
+<script src="data/glossary.js"></script>
+<script src="data/safety-templates.js"></script>
 <script>
 (function(){
 const $ = s => document.querySelector(s);
@@ -463,9 +497,9 @@ function renderNav(){
 
 /* ---------- helpers ---------- */
 const pill = (txt) => {
-  const map = {ok:['Active','Online','Operating','On track','Closed','Approved','IFC','Answered','Expected','Done','Paid','Certified','Agreed'],
-               warn:['In action','Pending','Pending approval','Weak','At risk','Idle','For approval','Comments','Submitted','Rectification','In progress','Expiring','Under review'],
-               bad:['Open','Delayed','Offline','Breakdown','Superseded','Docs expired','Disputed','On hold'],
+  const map = {ok:['Active','Online','Operating','On track','Closed','Approved','IFC','Answered','Expected','Done','Paid','Certified','Agreed','Recorded'],
+               warn:['In action','Pending','Pending approval','Weak','At risk','Idle','For approval','Comments','Submitted','Rectification','In progress','Expiring','Under review','Awaiting approval'],
+               bad:['Open','Delayed','Offline','Breakdown','Superseded','Docs expired','Disputed','On hold','Blocked'],
                saved:['Saved offline'],
                info:['Draft','Not started']};
   const cls = Object.keys(map).find(k=>map[k].includes(txt))||'';
@@ -610,6 +644,7 @@ V.safety = () => {
     <div class="li"><div class="t"><b>Heat stress & hydration</b><p>15 Oct · 151 of 153 signed</p></div><div class="bar" style="width:120px"><i style="width:99%"></i></div></div>
     <div class="li"><div class="t"><b>Lifting operations: signaller & exclusion zone</b><p>14 Oct · 139 of 150 signed</p></div><div class="bar" style="width:120px"><i style="width:93%"></i></div></div></div>`;
   if(S.safetyTab==='people') body = `<div class="tbl"><table><thead><tr><th>Worker</th><th>Trade</th><th>CIDB green card expiry</th><th class="n">Days left</th><th></th></tr></thead><tbody>${D.greencard.sort((a,b)=>a.days-b.days).map(g=>`<tr><td>${g.n}</td><td class="sub">${g.trade}</td><td class="num">${g.exp}</td><td class="n" style="color:${g.days<7?'var(--bad)':'var(--warn)'}">${g.days}</td><td><button class="btn sm" type="button" data-toast="Renewal reminder logged for ${g.n} (demo)">Remind</button></td></tr>`).join('')}</tbody></table></div><p class="sub" style="margin:0">Workers with an expired card are blocked at the gate turnstile automatically.</p>`;
+  if(S.safetyTab==='forms') body = formsTab();
   if(S.safetyTab==='incidents') body = `<div class="list">
     <div class="li"><span class="sev warn"></span><div class="t"><b>Near miss: plywood sheet blown off L11 during gust</b><p>02 Oct · No injury · Root cause: unsecured stack · Action: tie-down rule added to checklist</p></div>${pill('Closed')}</div>
     <div class="li"><span class="sev warn"></span><div class="t"><b>First aid: cut to hand from rebar end</b><p>21 Sep · Rebar caps now mandatory at L10+</p></div>${pill('Closed')}</div></div>
@@ -624,7 +659,7 @@ V.safety = () => {
       ${kpi('Active permits','3','1 pending approval','caution')}
     </div>
     <div class="panel">
-      ${tabs('safetyTab',[['hazards','Hazard reports'],['permits','Permits to work'],['toolbox','Toolbox talks'],['people','Worker competency'],['incidents','Incidents']])}
+      ${tabs('safetyTab',[['hazards','Hazard reports'],['permits','Permits to work'],['toolbox','Toolbox talks'],['forms','Templates & forms'],['people','Worker competency'],['incidents','Incidents']])}
       ${body}
       ${ro&&S.safetyTab==='permits'?'<p class="sub" style="margin:0">Only the site manager and safety officer can approve permits.</p>':''}
     </div>`;
@@ -818,12 +853,17 @@ V.guide = () => {
   const canEdit = S.role==='manager'||S.role==='office';
   let body='';
   if(S.guideTab==='gloss'){
-    const cats=[...new Set(D.gloss.map(g=>g[2]))];
-    body = `<div class="panel"><label class="f" for="glossQ" style="max-width:420px">Search abbreviations<input id="glossQ" type="search" placeholder="e.g. PTW, retention, DOSH" autocomplete="off"></label>
-      <div class="tbl"><table><thead><tr><th>Abbreviation</th><th>Meaning</th><th>Area</th></tr></thead><tbody id="glossBody">
-      ${D.gloss.slice().sort((a,b)=>a[0].localeCompare(b[0])).map(g=>`<tr data-gloss="${esc((g[0]+' '+g[1]+' '+g[2]).toLowerCase())}"><td class="mono"><b>${g[0]}</b></td><td>${g[1]}</td><td class="sub">${g[2]}</td></tr>`).join('')}
+    const cats=[...new Set(GLOSS.map(g=>g[3]))], cur=S.glossCat||'All';
+    body = `<div class="panel">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between">
+        <label class="f" for="glossQ" style="flex:1 1 260px;max-width:440px">Search in English or Bahasa Malaysia<input id="glossQ" type="search" placeholder="e.g. PTW, retention, kren" autocomplete="off" value="${esc(S.glossQ||'')}"></label>
+        <div style="display:flex;gap:6px"><a class="btn sm" href="${RAW}pdf/00_Construction-Abbreviation-List.pdf" target="_blank" rel="noopener">Download PDF</a><a class="btn sm" href="${RAW}word/00_Construction-Abbreviation-List.docx" target="_blank" rel="noopener">Word</a></div></div>
+      <div class="chips">${['All',...cats].map(c=>`<button type="button" class="chip" data-gcat="${esc(c)}" aria-pressed="${cur===c}">${esc(c)} <span class="tag">${c==='All'?GLOSS.length:GLOSS.filter(g=>g[3]===c).length}</span></button>`).join('')}</div>
+      <div class="tbl"><table><thead><tr><th>Abbreviation</th><th>English</th><th>Bahasa Malaysia</th><th>Area</th></tr></thead><tbody id="glossBody">
+      ${GLOSS.slice().sort((a,b)=>a[0].localeCompare(b[0])).map(g=>`<tr data-cat="${esc(g[3])}" data-gloss="${esc((g[0]+' '+g[1]+' '+g[2]).toLowerCase())}"><td class="mono"><b>${esc(g[0])}</b></td><td>${esc(g[1])}</td><td class="sub">${esc(g[2])}</td><td class="sub">${esc(g[3])}</td></tr>`).join('')}
       </tbody></table></div><p class="sub" id="glossNone" style="margin:0" hidden>No match. Ask the document controller to add it.</p>
-      <p class="sub" style="margin:0">${D.gloss.length} terms across ${cats.length} areas. Tap any abbreviation elsewhere in the app to see its meaning.</p></div>`;
+      <p class="sub" id="glossCount" style="margin:0"></p>
+      <p class="sub" style="margin:0">Bahasa Malaysia terms are suggested translations. Check official terms with the relevant authority before using them in contract documents.</p></div>`;
   }
   if(S.guideTab==='std') body = `<div class="panel"><div class="tbl"><table><thead><tr><th>Reference</th><th>Title</th><th>What it covers on site</th><th>Used in</th></tr></thead><tbody>
     ${D.standards.map(s=>`<tr><td class="mono"><b>${s[0]}</b></td><td>${s[1]}</td><td class="sub">${s[2]}</td><td class="sub">${s[3]}</td></tr>`).join('')}
@@ -852,13 +892,13 @@ V.guide = () => {
 
 V.map = () => {
   const F = [
-    ['Safety',['Hazard reporting with photo & location','Permit to work (height, hot work, lifting, confined space)','Toolbox talks with multilingual sign-in','CIDB green card & training expiry alerts','Incident & near-miss log, draft JKKP forms','Safety KPIs: LTI-free days, safe man-hours','PPE & scaffold inspection checklists'],['MVP','MVP','MVP','MVP','Phase 2','MVP','Phase 2']],
+    ['Safety',['Hazard reporting with photo & location','Permit to work (height, hot work, lifting, confined space)','Toolbox talks with multilingual sign-in','CIDB green card & training expiry alerts','Incident & near-miss log, draft JKKP forms','Safety KPIs: LTI-free days, safe man-hours','PPE & scaffold inspection checklists','17 fillable safety templates: 7 permits, HIRARC, JSA, inspections, reports','Printable Word & PDF versions of every template'],['MVP','MVP','MVP','MVP','Phase 2','MVP','Phase 2','MVP','MVP']],
     ['Site operations',['Daily site diary (weather, manpower, work done, photos)','Gate check-in / attendance (face ID turnstile)','3-week lookahead & master schedule','RFIs, NCRs and defect pinning on plans','Inspection requests (RFA / ITP)','Delay & EOT evidence log'],['MVP','MVP','MVP','MVP','Phase 2','Phase 2']],
     ['Architecture & design',['Drawing register with revision control','Superseded-drawing alerts on site','Mark-up & RFI from a drawing','Shop drawing & material submissions','BIM / IFC model viewer'],['MVP','MVP','Phase 2','Phase 2','Phase 3']],
     ['BQ & cost',['BQ import from Excel (SMM2 structure)','Progress measurement per BQ item','Variation orders & approvals','Monthly progress claims & retention','Cost vs budget, cash flow S-curve'],['MVP','MVP','MVP','Phase 2','Phase 2']],
     ['Materials',['Material requests & approval','Delivery order check-in vs PO','Stock levels & minimum alerts','Wastage tracking vs BQ quantities','Supplier performance'],['MVP','MVP','MVP','Phase 2','Phase 3']],
     ['Subcontractors',['Register with SSM, CIDB grade, insurance, PERKESO, FOMEMA','Expiry alerts & gate block on expired documents','Work packages linked to BQ & schedule','Subcon claims, retention & back-charges','Performance rating carried to next tender','Subcon portal: each company sees only its own data'],['MVP','MVP','MVP','MVP','Phase 2','MVP']],
-    ['Guide & standards',['Searchable abbreviation glossary','Regulations & standards register (Acts, MS, CIDB, JKR)','Company SOPs & templates with version control','Drawing & document numbering conventions','Tap-to-explain abbreviations anywhere in the app'],['MVP','MVP','MVP','MVP','Phase 2']],
+    ['Guide & standards',['Abbreviation list: 360+ terms in English and Bahasa Malaysia, downloadable','Regulations & standards register (Acts, MS, CIDB, JKR)','Company SOPs & templates with version control','Drawing & document numbering conventions','Tap-to-explain abbreviations anywhere in the app'],['MVP','MVP','MVP','MVP','Phase 2']],
     ['Plant & equipment',['Equipment register & status','DOSH PMA certificate tracking','Operator daily pre-use checklist','Service schedule & breakdown log'],['Phase 2','Phase 2','Phase 2','Phase 2']],
     ['Site network',['Access point status & coverage by zone','Guest Wi-Fi vouchers for visitors','CCTV & IoT sensor health','Wind, dust & noise alerts'],['MVP','Phase 2','Phase 2','Phase 3']],
     ['Platform',['Role-based access for all four user types','Mobile-first: phone layout, large buttons, works with gloves','Offline-first: forms, photos and sign-ins queue on the phone and sync later','Project switcher & head-office portfolio across sites','Bahasa Malaysia, English, Bengali, Vietnamese, Nepali','PDPA: consent for face ID, face blurring on photos, data kept in Malaysia','Audit trail of every approval'],['MVP','MVP','MVP','MVP','MVP','MVP','MVP']]
@@ -882,6 +922,7 @@ function render(){
   renderNav(); renderSync();
   $('#proj').value=S.proj;
   $('#view').innerHTML = offlineBar() + V[S.view]();
+  if(S.view==='guide' && S.guideTab==='gloss') filterGloss();
   const th=$('#top').offsetHeight; document.documentElement.style.setProperty('--toph',th+'px');
 }
 
@@ -893,8 +934,8 @@ function toast(msg){
   t.textContent=msg; t.hidden=false; toastT=setTimeout(()=>{t.hidden=true;},3200);
 }
 function closeLayer(){ $('#layer').innerHTML=''; }
-function openModal(html){
-  $('#layer').innerHTML=`<div class="scrim" data-scrim><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;
+function openModal(html, cls){
+  $('#layer').innerHTML=`<div class="scrim" data-scrim><div class="modal ${cls||''}" role="dialog" aria-modal="true">${html}</div></div>`;
   const f=$('#layer').querySelector('input,select,textarea,button:not(.x)'); if(f) f.focus();
 }
 function reportModal(){
@@ -931,6 +972,10 @@ function dwgModal(no){
 document.addEventListener('click', e=>{
   const t=e.target.closest('button,[data-dwgopen],[data-projopen],[data-subopen],[data-scrim]'); if(!t) return;
   if(t.dataset.subopen){ subModal(t.dataset.subopen); return; }
+  if(t.dataset.form){ formModal(t.dataset.form); return; }
+  if(t.dataset.addrow){ addFormRow(t.dataset.addrow); return; }
+  if(t.dataset.sigclear){ const c=document.getElementById(t.dataset.sigclear); c.getContext('2d').clearRect(0,0,c.width,c.height); delete c.dataset.signed; return; }
+  if(t.dataset.gcat){ S.glossCat=t.dataset.gcat; document.querySelectorAll('[data-gcat]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.gcat===S.glossCat)); filterGloss(); return; }
   if(t.id==='syncBtn'){
     S.online=!S.online;
     if(S.online){const n=S.queue; S.queue=0; render(); toast(n?`Signal back. ${n} item${n>1?'s':''} sent.`:'Signal back. Everything is up to date.');}
@@ -958,9 +1003,7 @@ document.addEventListener('keydown', e=>{
 });
 document.addEventListener('input', e=>{
   if(e.target.id!=='glossQ') return;
-  const q=e.target.value.trim().toLowerCase(); let shown=0;
-  document.querySelectorAll('#glossBody tr').forEach(r=>{const m=!q||r.dataset.gloss.includes(q); r.hidden=!m; if(m) shown++;});
-  $('#glossNone').hidden=shown>0;
+  S.glossQ=e.target.value; filterGloss();
 });
 function selectProject(k){
   S.proj=k; render(); window.scrollTo(0,0);
@@ -978,6 +1021,137 @@ document.addEventListener('submit', e=>{
   closeLayer(); S.view='safety'; S.safetyTab='hazards'; render();
   toast(S.online?`${id} logged. It now shows in the safety officer's list (demo).`:`${id} saved on this phone. It will send when signal returns.`);
 });
+/* ---------- safety templates & abbreviation list ---------- */
+const TPL = window.VC_TEMPLATES || [];
+const GLOSS = window.VC_GLOSSARY || D.gloss.map(g=>[g[0],g[1],'',g[2]]);
+const RAW = 'https://github.com/kshinann/Wifi-Manager-/raw/ccr-66c8814d-t40nh6/templates/';
+const tplFile = t => t.id+'_'+t.title.split(' — ')[0].replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'');
+S.forms = [];
+
+function filterGloss(){
+  const body=$('#glossBody'); if(!body) return;
+  const q=(S.glossQ||'').trim().toLowerCase(), cat=S.glossCat||'All'; let shown=0;
+  body.querySelectorAll('tr').forEach(r=>{const m=(cat==='All'||r.dataset.cat===cat)&&(!q||r.dataset.gloss.includes(q)); r.hidden=!m; if(m) shown++;});
+  $('#glossNone').hidden=shown>0;
+  $('#glossCount').textContent=`Showing ${shown} of ${GLOSS.length} abbreviations.`;
+}
+
+function formsTab(){
+  const cats=[...new Set(TPL.map(t=>t.cat))];
+  const done = S.forms.length ? `<div class="panel"><h3>Submitted on this device</h3><div class="list">${S.forms.map(f=>`<div class="li"><span class="sev ${f.status==='Blocked'?'bad':f.status==='Recorded'?'ok':'warn'}"></span><div class="t"><b>${esc(f.title)}</b><p><span class="tag">${f.no}</span> · ${f.when} · ${f.answered} checklist items${f.nos?` · <span style="color:var(--bad)">${f.nos} answered No</span>`:''} · ${f.signed} signature${f.signed===1?'':'s'}</p></div>${pill(f.status)}</div>`).join('')}</div></div>` : '';
+  return `${done}
+    <p class="sub" style="margin:0">Fill a form on the phone (works offline, with finger signatures), or download the Word / PDF version to print. Every template is a draft for your SHO to review before use.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sm" href="${RAW}pdf/00_All-Safety-Templates.pdf" target="_blank" rel="noopener">Download all templates (one PDF)</a></div>
+    ${cats.map(c=>`<div class="panel"><h3>${c} <span class="tag">${TPL.filter(t=>t.cat===c).length}</span></h3><div class="list">${TPL.filter(t=>t.cat===c).map(t=>`<div class="li"><div class="t"><b>${esc(t.title)}</b><p><i>${esc(t.bm)}</i> · <span class="tag">${t.id}</span></p><p>${esc(t.use)}</p></div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex:none"><button class="btn sm pri" type="button" data-form="${t.id}">Fill in</button><a class="btn sm" href="${RAW}pdf/${tplFile(t)}.pdf" target="_blank" rel="noopener">PDF</a><a class="btn sm" href="${RAW}word/${tplFile(t)}.docx" target="_blank" rel="noopener">Word</a></div></div>`).join('')}</div></div>`).join('')}`;
+}
+
+const MX_L=['Inconceivable','Remote','Conceivable','Possible','Most likely'], MX_S=['Negligible','Minor','Serious','Fatal','Catastrophic'];
+const riskCls = v => v>=15?'hi':v>=5?'md':'lo';
+const riskTxt = v => v>=15?'HIGH: stop and act immediately':v>=5?'MEDIUM: plan controls, proceed with care':'LOW: acceptable, keep monitoring';
+const todayISO = () => { const d=new Date(); return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10); };
+
+function fieldHtml(f, id){
+  let v='';
+  if(/^Project/.test(f.l)) v=P().n;
+  if(f.auto==='PTW') v='PTW-0'+(392+S.forms.filter(x=>x.no.startsWith('PTW')).length);
+  if(f.t==='date') v=todayISO();
+  const full = f.t==='area' ? ' full' : '';
+  let input;
+  if(f.t==='select') input=`<select id="${id}"><option value="">Choose…</option>${f.opts.map(o=>`<option>${esc(o)}</option>`).join('')}</select>`;
+  else if(f.t==='area') input=`<textarea id="${id}" rows="3"></textarea>`;
+  else input=`<input id="${id}" type="${f.t==='num'?'number':f.t==='date'?'date':f.t==='time'?'time':'text'}" ${f.t==='num'?'inputmode="decimal" step="any"':''} value="${esc(v)}">`;
+  return `<label class="f${full}" for="${id}">${esc(f.l)}${input}</label>`;
+}
+
+function sectionHtml(s, si){
+  const p=`f${si}`;
+  let inner='';
+  if(s.type==='fields') inner=`<div class="fgrid">${s.fields.map((f,i)=>fieldHtml(f,`${p}_${i}`)).join('')}</div>`;
+  if(s.type==='yesno') inner=s.items.map((it,i)=>`<div class="yn" data-yn="${p}_${i}"><span class="q">${i+1}. ${esc(it)}</span><span class="seg3" role="radiogroup" aria-label="${esc(it)}">
+      <label><input type="radio" name="${p}_${i}" value="Y">Yes</label><label class="no"><input type="radio" name="${p}_${i}" value="N">No</label><label><input type="radio" name="${p}_${i}" value="NA">N/A</label></span></div>`).join('');
+  if(s.type==='checks') inner=`<div class="cgrid">${s.items.map((it,i)=>`<label for="${p}_${i}"><input type="checkbox" id="${p}_${i}"> ${esc(it)}</label>`).join('')}</div>`;
+  if(s.type==='table'){
+    const row = r => `<tr>${s.cols.map((c,ci)=>`<td><input id="${p}_r${r}_${ci}" aria-label="${esc(c)} row ${r+1}"></td>`).join('')}</tr>`;
+    const n=Math.min(s.rows,3);
+    inner=`<div class="tbl"><table class="ftable"><thead><tr>${s.cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody id="${p}_body" data-cols="${s.cols.length}" data-max="${s.rows}" data-next="${n}">${Array.from({length:n},(_,r)=>row(r)).join('')}</tbody></table></div>
+      <button class="btn sm" type="button" data-addrow="${p}" style="align-self:flex-start">Add row</button>`;
+  }
+  if(s.type==='signs') inner=`<div class="grid g3">${s.roles.map((r,i)=>`<div class="sig"><span class="sub" style="font-size:12.5px">${esc(r)}</span><input id="${p}_${i}_n" placeholder="Full name" aria-label="Name: ${esc(r)}"><canvas class="sigpad" id="${p}_${i}_c" width="600" height="220" aria-label="Signature pad: sign with your finger"></canvas><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="tag">Sign above · time recorded on submit</span><button class="btn sm" type="button" data-sigclear="${p}_${i}_c">Clear</button></div></div>`).join('')}</div>`;
+  if(s.type==='matrix') inner=`<div class="mx" aria-label="Risk matrix"><span class="h"></span>${MX_S.map((x,i)=>`<span class="h">S${i+1}<br>${x}</span>`).join('')}
+      ${[5,4,3,2,1].map(l=>`<span class="h" style="text-align:right">L${l} ${MX_L[l-1]}</span>${[1,2,3,4,5].map(sv=>`<span class="${riskCls(l*sv)}">${l*sv}</span>`).join('')}`).join('')}</div>
+      <div class="fgrid"><label class="f" for="${p}_L">Likelihood<select id="${p}_L" data-risk="${p}">${MX_L.map((x,i)=>`<option value="${i+1}">${i+1} · ${x}</option>`).join('')}</select></label>
+      <label class="f" for="${p}_S">Severity<select id="${p}_S" data-risk="${p}">${MX_S.map((x,i)=>`<option value="${i+1}">${i+1} · ${x}</option>`).join('')}</select></label></div>
+      <p class="notebox" id="${p}_out" aria-live="polite">Risk = 1 × 1 = <b>1</b> · <span class="pill ok">${riskTxt(1)}</span></p>`;
+  if(s.type==='note') inner=`<p class="notebox">${esc(s.text)}</p>`;
+  return `<section class="fsec"><h3>${esc(s.h)}</h3>${inner}</section>`;
+}
+
+function formModal(id){
+  const t=TPL.find(x=>x.id===id); if(!t) return;
+  openModal(`<div class="mh"><div><span class="tag">${t.id} · ${esc(t.cat)}</span><h2>${esc(t.title)}</h2><p class="sub" style="margin:0"><i>${esc(t.bm)}</i> · ${esc(t.validity)}</p></div><button class="x" type="button" data-close aria-label="Close">×</button></div>
+    <p class="notebox"><b>When to use:</b> ${esc(t.use)}</p>
+    <form id="tplForm" data-tpl="${t.id}" novalidate><div id="tplErr" class="formerr" hidden></div>
+      ${t.sections.map(sectionHtml).join('')}
+      <div class="formbar"><button class="btn" type="button" data-close>Cancel</button><button class="btn pri" type="submit">${t.cat==='Permits to work'?'Submit for approval':'Submit'}</button></div></form>`, 'wide');
+  initSigPads();
+}
+
+function addFormRow(p){
+  const body=document.getElementById(p+'_body'); if(!body) return;
+  const n=+body.dataset.next, max=+body.dataset.max, cols=+body.dataset.cols;
+  if(n>=max){ toast(`This form has room for ${max} rows. Use a second form for more.`); return; }
+  const tr=document.createElement('tr');
+  tr.innerHTML=Array.from({length:cols},(_,ci)=>`<td><input id="${p}_r${n}_${ci}" aria-label="Row ${n+1} column ${ci+1}"></td>`).join('');
+  body.appendChild(tr); body.dataset.next=n+1; tr.querySelector('input').focus();
+}
+
+function initSigPads(){
+  const ink=getComputedStyle(document.body).color;
+  document.querySelectorAll('.sigpad').forEach(c=>{
+    const ctx=c.getContext('2d'); let drawing=false;
+    const pos=e=>{const r=c.getBoundingClientRect(); return [(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height];};
+    c.addEventListener('pointerdown',e=>{drawing=true; c.setPointerCapture(e.pointerId); ctx.strokeStyle=ink; ctx.lineWidth=3; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(...pos(e)); e.preventDefault();});
+    c.addEventListener('pointermove',e=>{if(!drawing) return; ctx.lineTo(...pos(e)); ctx.stroke(); c.dataset.signed='1';});
+    const stop=()=>{drawing=false;}; c.addEventListener('pointerup',stop); c.addEventListener('pointercancel',stop);
+  });
+}
+
+document.addEventListener('change', e=>{
+  const p=e.target.dataset && e.target.dataset.risk; if(!p) return;
+  const l=+$('#'+p+'_L').value, sv=+$('#'+p+'_S').value, v=l*sv;
+  $('#'+p+'_out').innerHTML=`Risk = ${l} × ${sv} = <b>${v}</b> · <span class="pill ${v>=15?'bad':v>=5?'warn':'ok'}">${riskTxt(v)}</span>`;
+});
+document.addEventListener('change', e=>{
+  if(e.target.type==='radio'){ const row=e.target.closest('.yn'); if(row) row.classList.remove('miss'); }
+});
+
+document.addEventListener('submit', e=>{
+  if(e.target.id!=='tplForm') return;
+  e.preventDefault();
+  const t=TPL.find(x=>x.id===e.target.dataset.tpl), err=$('#tplErr');
+  const rows=[...e.target.querySelectorAll('.yn')];
+  const missing=rows.filter(r=>!r.querySelector('input:checked'));
+  rows.forEach(r=>r.classList.toggle('miss',!r.querySelector('input:checked')));
+  const pads=[...e.target.querySelectorAll('.sigpad')], signed=pads.filter(c=>c.dataset.signed).length;
+  const problems=[];
+  if(missing.length) problems.push(`Answer every checklist item with Yes, No or N/A (${missing.length} left, shown in red).`);
+  if(pads.length && !signed) problems.push('At least the first person must sign before the form is submitted.');
+  if(problems.length){ err.innerHTML=problems.map(esc).join('<br>'); err.hidden=false; err.scrollIntoView({block:'center'}); return; }
+  const nos=e.target.querySelectorAll('.yn input[value="N"]:checked').length;
+  const permit=t.cat==='Permits to work';
+  let status = permit ? (nos?'Blocked':'Awaiting approval') : 'Recorded';
+  if(!S.online){ status='Saved offline'; S.queue++; }
+  const noField=e.target.querySelector('input[value^="PTW-0"]');
+  const no = permit && noField ? noField.value : `${t.id}-${String(S.forms.filter(f=>f.id===t.id).length+1).padStart(3,'0')}`;
+  const now=new Date(), when=now.toTimeString().slice(0,5);
+  S.forms.unshift({id:t.id,no,title:t.title,status,nos,answered:rows.length,signed,when:'Today '+when});
+  closeLayer(); S.view='safety'; S.safetyTab='forms'; render(); window.scrollTo(0,0);
+  toast(!S.online ? `${no} saved on this phone. It will send when signal returns.`
+    : permit && nos ? `${no} not issued: ${nos} precaution${nos>1?'s':''} answered No. Fix them and submit a new permit.`
+    : permit ? `${no} sent to the site manager for approval (demo).` : `${t.title} ${no} recorded (demo).`);
+});
+
 /* ---------- phone features: photo, GPS, real connectivity, back button ---------- */
 const hz = {img:null, gps:null};
 document.addEventListener('change', e=>{

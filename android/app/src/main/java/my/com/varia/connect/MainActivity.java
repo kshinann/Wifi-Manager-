@@ -81,6 +81,14 @@ public class MainActivity extends Activity {
                     if (path == null || path.equals("/") || path.equals("/index.html")) {
                         return pageResponse();
                     }
+                    if (path.startsWith("/data/") && path.endsWith(".js") && !path.contains("..")) {
+                        try {
+                            return new WebResourceResponse("text/javascript", "utf-8",
+                                    getAssets().open(path.substring(1)));
+                        } catch (IOException ignored) {
+                            // fall through to 404
+                        }
+                    }
                     return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", null,
                             new ByteArrayInputStream(new byte[0]));
                 }
