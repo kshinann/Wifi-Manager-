@@ -120,6 +120,7 @@ tfoot td{font-weight:600;border-bottom:0}
 .pill.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
 .pill.info{background:var(--primary-soft);color:var(--primary);border-color:transparent}
 .tag{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+td.tag{white-space:nowrap}
 
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
 .tabs button{border:0;background:none;padding:8px 12px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;font-weight:500}
@@ -184,6 +185,7 @@ label.f input,label.f select,label.f textarea{background:var(--surface-2);border
   nav.side .badge{position:absolute;top:2px;right:calc(50% - 22px);margin:0;padding:0 5px;font-size:10px}
   main{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
   .toast{bottom:calc(86px + env(safe-area-inset-bottom,0px))}
+  .top{position:static}
   .proj{border-left:0;padding-left:0;flex:1 1 160px}
   .proj select{max-width:100%;width:100%}
   .brand{font-size:19px}
@@ -239,7 +241,9 @@ const I = {
   mat:'<path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/>',
   plant:'<path d="M4 20h16"/><path d="M6 20V9h6l3 5h3v6"/><circle cx="8" cy="20" r="0"/><path d="M12 9V4h3"/>',
   net:'<path d="M2 9a15 15 0 0 1 20 0"/><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r=".8"/>',
-  map:'<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/>'
+  map:'<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/>',
+  sub:'<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.2A5 5 0 0 1 21 19"/>',
+  guide:'<path d="M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2z"/><path d="M5 18a2 2 0 0 1 2-2h12"/><path d="M9 8h6M9 11h4"/>'
 };
 
 /* ---------- sample data ---------- */
@@ -349,6 +353,66 @@ const D = {
   ]
 };
 
+D.subs = [
+  {k:'acuan',n:'Bina Acuan Sdn Bhd',trade:'Formwork',cidb:'G5',ins:'2027-03-31',pkg:'Formwork to columns, beams & slabs L1–L18',val:3480000,prog:62,claimed:2050000,men:46,r:[4.2,3.8,3.5,4.0],st:'Approved'},
+  {k:'jaya',n:'Jaya Scaffold Sdn Bhd',trade:'Scaffolding',cidb:'G4',ins:'2026-11-08',pkg:'External scaffold & façade access',val:920000,prog:70,claimed:610000,men:12,r:[4.6,4.2,4.4,4.0],st:'Expiring'},
+  {k:'teguh',n:'Teguh Steel Works',trade:'Rebar & steel',cidb:'G6',ins:'2027-01-15',pkg:'Rebar fixing L1–L18 & roof steel',val:2150000,prog:66,claimed:1380000,men:38,r:[3.9,4.1,4.0,4.3],st:'Approved'},
+  {k:'ibs',n:'IBS Precast Sdn Bhd',trade:'Precast façade',cidb:'G7',ins:'2027-05-20',pkg:'Supply & install 684 precast panels',val:2872800,prog:31,claimed:890000,men:16,r:[4.0,4.3,2.6,3.4],st:'Approved'},
+  {k:'kumar',n:'Kumar M&E Engineering',trade:'M&E services',cidb:'G7',ins:'2026-10-30',pkg:'Plumbing, sanitary & electrical',val:6800000,prog:9,claimed:540000,men:22,r:[3.6,3.9,2.8,3.2],st:'Expiring'},
+  {k:'cahaya',n:'Cahaya Bata Enterprise',trade:'Brickwork & plaster',cidb:'G3',ins:'2026-10-12',pkg:'Brickwork & plastering L1–L18',val:2368400,prog:12,claimed:260000,men:18,r:[3.4,3.6,3.9,3.1],st:'Docs expired'}
+];
+D.subClaims = [
+  {id:'SC-ACU-09',k:'acuan',per:'Sep 2026',gross:2050000,prev:1812000,bc:2400,st:'Certified'},
+  {id:'SC-TEG-09',k:'teguh',per:'Sep 2026',gross:1380000,prev:1236000,bc:0,st:'Paid'},
+  {id:'SC-IBS-04',k:'ibs',per:'Sep 2026',gross:890000,prev:612000,bc:0,st:'Submitted'},
+  {id:'SC-KUM-03',k:'kumar',per:'Sep 2026',gross:540000,prev:402000,bc:0,st:'Submitted'},
+  {id:'SC-CAH-02',k:'cahaya',per:'Sep 2026',gross:260000,prev:148000,bc:1850,st:'On hold'}
+];
+D.backcharges = [
+  {id:'BC-014',k:'acuan',t:'Clean-up of concrete spill at L11 lift lobby',amt:2400,st:'Agreed'},
+  {id:'BC-015',k:'cahaya',t:'Replace 40 damaged clay bricks + labour, L6',amt:1850,st:'Disputed'},
+  {id:'BC-016',k:'jaya',t:'Missing toe boards found at L15 (re-work by main con)',amt:900,st:'Draft'}
+];
+D.gloss = [
+  ['BQ','Bill of Quantities','Commercial'],['SMM2','Standard Method of Measurement, 2nd ed. (Malaysia)','Commercial'],['VO','Variation Order','Commercial'],['PC','Progress Claim','Commercial'],
+  ['PS','Provisional Sum','Commercial'],['EOT','Extension of Time','Commercial'],['LAD','Liquidated and Ascertained Damages','Commercial'],['CPC','Certificate of Practical Completion','Commercial'],
+  ['DLP','Defects Liability Period','Commercial'],['QS','Quantity Surveyor','Commercial'],['PO','Purchase Order','Materials'],['DO','Delivery Order','Materials'],['MR','Material Request','Materials'],
+  ['PTW','Permit to Work','Safety'],['HIRARC','Hazard Identification, Risk Assessment & Risk Control','Safety'],['LTI','Lost Time Injury','Safety'],['PPE','Personal Protective Equipment','Safety'],
+  ['SHO','Safety & Health Officer','Safety'],['SSS','Site Safety Supervisor','Safety'],['JKKP / DOSH','Jabatan Keselamatan dan Kesihatan Pekerjaan / Department of Occupational Safety and Health','Safety'],
+  ['PMA','Perakuan Mesin Angkat: DOSH certificate for lifting machinery','Plant'],['CIDB','Construction Industry Development Board','Regulatory'],['SSM','Suruhanjaya Syarikat Malaysia (company registration)','Regulatory'],
+  ['PDPA','Personal Data Protection Act 2010','Regulatory'],['CIPAA','Construction Industry Payment and Adjudication Act 2012','Regulatory'],['UBBL','Uniform Building By-Laws 1984','Regulatory'],
+  ['CCC','Certificate of Completion and Compliance','Regulatory'],['FOMEMA','Medical screening for foreign workers','Regulatory'],['PERKESO / SOCSO','Social Security Organisation','Regulatory'],
+  ['RFI','Request for Information','Operations'],['NCR','Non-Conformance Report','Operations'],['RFA','Request for Approval / inspection','Operations'],['ITP','Inspection & Test Plan','Operations'],
+  ['IFC','Issued for Construction','Design'],['BIM','Building Information Modelling','Design'],['IBS','Industrialised Building System (precast, modular)','Design'],['ARC / STR / MEP','Architectural / Structural / Mechanical, Electrical & Plumbing','Design'],
+  ['G1–G7','CIDB contractor grades by tender capacity (G7 = unlimited)','Subcontractors'],['AP','Wi-Fi Access Point','Network']
+];
+D.standards = [
+  ['Act 514','Occupational Safety and Health Act 1994 (amended 2022)','Duties of employers, SHO/SSS, safety committee','Safety'],
+  ['NADOPOD 2004','Notification of Accident, Dangerous Occurrence, Poisoning & Disease regulations','Reporting accidents to DOSH (JKKP forms)','Safety'],
+  ['Act 139','Factories and Machinery Act 1967','PMA for cranes, hoists, pressure vessels','Plant'],
+  ['Act 520','CIDB Act 1994','Contractor registration, green card, levy','Subcontractors · Safety'],
+  ['CIS 7','QLASSIC: Quality Assessment System for Building Construction Work','Workmanship scoring at handover','Operations'],
+  ['UBBL 1984','Uniform Building By-Laws','Fire, spacing, access requirements','Drawings'],
+  ['MS EN 1992','Eurocode 2: Design of concrete structures (with Malaysian National Annex)','Structural design checks','Drawings'],
+  ['MS 1184','Universal design and accessibility in the built environment','OKU access, ramps, lifts','Drawings'],
+  ['MS 1525','Energy efficiency & renewable energy for non-residential buildings','Façade, lighting, M&E design','Drawings'],
+  ['MS 522','Portland cement specification','Material approval & testing','Materials'],
+  ['SMM2','Malaysian Standard Method of Measurement of Building Works','How BQ items are measured','BQ & cost'],
+  ['PAM 2018','PAM standard form of building contract','Main contract terms, VOs, EOT, claims','BQ & cost'],
+  ['Act 746','Construction Industry Payment and Adjudication Act 2012 (CIPAA)','Payment disputes, incl. with subcontractors','Subcontractors'],
+  ['Act 709','Personal Data Protection Act 2010','Worker data, face ID, photos','Platform'],
+  ['Act 127','Environmental Quality Act 1974','Dust, noise, silt control on site','Site network (sensors)']
+];
+D.sops = [
+  {no:'SOP-SHE-003',t:'Permit to work procedure',v:'4.0',own:'SHE Manager',up:'2026-08-02',st:'Approved'},
+  {no:'SOP-SHE-007',t:'Working at height & edge protection',v:'3.1',own:'SHE Manager',up:'2026-09-15',st:'Approved'},
+  {no:'SOP-QA-011',t:'Concrete pour checklist (pre / during / post)',v:'2.2',own:'QA/QC Engineer',up:'2026-06-20',st:'Approved'},
+  {no:'SOP-PRC-005',t:'Material receiving & DO check',v:'3.0',own:'Procurement',up:'2026-04-11',st:'Approved'},
+  {no:'SOP-SUB-002',t:'Subcontractor onboarding & prequalification',v:'1.0',own:'Contracts Manager',up:'2026-10-14',st:'Draft'},
+  {no:'TPL-OPS-001',t:'Daily site diary template',v:'5.0',own:'Project Manager',up:'2026-01-05',st:'Approved'},
+  {no:'TPL-QS-004',t:'Subcontractor claim form & back-charge notice',v:'2.0',own:'Senior QS',up:'2026-07-30',st:'Under review'}
+];
+
 const PROJECTS = [
   {k:'melati',n:'Residensi Melati — Block B',d:'18-storey condominium',loc:'Setapak, KL',prog:64.2,plan:72,cost:'−2.1%',costOk:true,lti:212,haz:1,net:'3/5 APs',netOk:false,men:159},
   {k:'kiara',n:'Menara Kiara Office Tower',d:'32-storey office, 4 basements',loc:'Mont Kiara, KL',prog:38.5,plan:36,cost:'+0.8%',costOk:true,lti:96,haz:3,net:'8/8 APs',netOk:true,men:244},
@@ -357,7 +421,7 @@ const PROJECTS = [
 ];
 
 /* ---------- state ---------- */
-let S = {role:'manager', view:'home', safetyTab:'hazards', opsTab:'diary', bqTab:'bq', dwgFilter:'All', toolbox:false, checkedIn:false, proj:'melati', online:true, queue:0};
+let S = {role:'manager', view:'home', safetyTab:'hazards', opsTab:'diary', bqTab:'bq', subTab:'register', guideTab:'gloss', dwgFilter:'All', toolbox:false, checkedIn:false, proj:'melati', online:true, queue:0};
 try{const r=localStorage.getItem('sitelink.role'); if(r) S.role=r;}catch(e){}
 $('#role').value=S.role;
 $('#proj').innerHTML=PROJECTS.map(p=>`<option value="${p.k}">${p.n}</option>`).join('');
@@ -370,16 +434,19 @@ const NAV = [
   {k:'design',l:'Drawings & design',s:'Drawings',i:'design'},
   {k:'bq',l:'BQ & cost',s:'BQ',i:'bq',grp:'Commercial'},
   {k:'mat',l:'Materials',s:'Materials',i:'mat'},
+  {k:'sub',l:'Subcontractors',s:'Subcons',i:'sub'},
   {k:'plant',l:'Plant & equipment',s:'Plant',i:'plant',grp:'Site'},
   {k:'net',l:'Site network',s:'Network',i:'net'},
+  {k:'guide',l:'Guide & standards',s:'Guide',i:'guide',grp:'Reference'},
   {k:'map',l:'Feature map',s:'Features',i:'map',grp:'About this draft'}
 ];
 const ROLE_NAV = {
-  office:['home','safety','ops','design','bq','mat','map'],
-  manager:['home','safety','ops','design','bq','mat','plant','net','map'],
-  worker:['home','safety','ops','design','map'],
-  it:['home','net','plant','safety','map']
+  office:['home','safety','ops','design','bq','mat','sub','guide','map'],
+  manager:['home','safety','ops','design','bq','mat','sub','plant','net','guide','map'],
+  worker:['home','safety','ops','design','sub','guide','map'],
+  it:['home','net','plant','safety','guide','map']
 };
+const MY_SUB = 'acuan'; // the worker/subcon role belongs to Bina Acuan (formwork)
 const ROLE_NAME = {office:'Head office / Client',manager:'Site manager',worker:'Worker / Subcon',it:'Site IT admin'};
 
 function renderNav(){
@@ -396,9 +463,9 @@ function renderNav(){
 
 /* ---------- helpers ---------- */
 const pill = (txt) => {
-  const map = {ok:['Active','Online','Operating','On track','Closed','Approved','IFC','Answered','Expected','Done'],
-               warn:['In action','Pending','Pending approval','Weak','At risk','Idle','For approval','Comments','Submitted','Rectification','In progress'],
-               bad:['Open','Delayed','Offline','Breakdown','Superseded'],
+  const map = {ok:['Active','Online','Operating','On track','Closed','Approved','IFC','Answered','Expected','Done','Paid','Certified','Agreed'],
+               warn:['In action','Pending','Pending approval','Weak','At risk','Idle','For approval','Comments','Submitted','Rectification','In progress','Expiring','Under review'],
+               bad:['Open','Delayed','Offline','Breakdown','Superseded','Docs expired','Disputed','On hold'],
                saved:['Saved offline'],
                info:['Draft','Not started']};
   const cls = Object.keys(map).find(k=>map[k].includes(txt))||'';
@@ -698,6 +765,91 @@ V.net = (asHome) => `
     <div class="panel"><h2>Site devices</h2><div class="list">${D.devices.map(d=>`<div class="li"><span class="sev ${d.s}"></span><div class="t"><b>${d.n}</b><p>${d.c}</p></div></div>`).join('')}</div></div>
   </div>`;
 
+const subName = k => D.subs.find(s=>s.k===k).n;
+const avg = r => r.reduce((a,b)=>a+b,0)/r.length;
+const stars = v => `<span class="num" style="color:${v>=4?'var(--ok)':v>=3.3?'var(--warn)':'var(--bad)'}">${v.toFixed(1)}</span>`;
+
+V.sub = () => {
+  const own = S.role==='worker';
+  const subs = own ? D.subs.filter(s=>s.k===MY_SUB) : D.subs;
+  const keep = x => !own || x.k===MY_SUB;
+  const totVal = subs.reduce((a,s)=>a+s.val,0), totClaim = subs.reduce((a,s)=>a+s.claimed,0);
+  let body='';
+  if(S.subTab==='register') body = `<div class="panel"><div class="tbl"><table><thead><tr><th>Company</th><th>Trade</th><th>CIDB</th><th>Insurance / WC expiry</th><th class="n">On site</th><th>Prequalification</th></tr></thead><tbody>
+    ${subs.map(s=>`<tr class="click" data-subopen="${s.k}" tabindex="0"><td><b>${s.n}</b></td><td class="sub">${s.trade}</td><td class="tag">${s.cidb}</td><td class="num" style="color:${s.st==='Docs expired'?'var(--bad)':s.st==='Expiring'?'var(--warn)':'inherit'}">${s.ins}</td><td class="n">${s.men}</td><td>${pill(s.st)}</td></tr>`).join('')}
+    </tbody></table></div><p class="sub" style="margin:0">Tap a company to see its documents. A subcontractor with expired documents is blocked from new permits and its workers are flagged at the gate.</p></div>`;
+  if(S.subTab==='packages') body = `<div class="panel"><div class="tbl"><table><thead><tr><th>Company</th><th>Work package</th><th class="n">Subcontract value</th><th>Progress</th><th class="n">Claimed to date</th></tr></thead><tbody>
+    ${subs.map(s=>`<tr><td><b>${s.n}</b><br><span class="tag">${s.trade}</span></td><td>${s.pkg}</td><td class="n">${RM(s.val)}</td><td><div class="bar ${s.prog<20?'mid':''}" style="width:110px"><i style="width:${s.prog}%"></i></div><span class="tag">${s.prog}%</span></td><td class="n">${RM(s.claimed)}</td></tr>`).join('')}
+    </tbody></table></div><p class="sub" style="margin:0">Each package is linked to its BQ items and lookahead tasks, so progress here matches progress in BQ & cost.</p></div>`;
+  if(S.subTab==='pay') body = `<div class="panel"><h3>Subcontractor claims · September 2026</h3><div class="tbl"><table><thead><tr><th>Claim</th><th>Company</th><th class="n">Gross to date</th><th class="n">Less previous</th><th class="n">Retention 5%</th><th class="n">Back-charges</th><th class="n">Nett payable</th><th>Status</th></tr></thead><tbody>
+    ${D.subClaims.filter(keep).map(c=>{const thisG=c.gross-c.prev, ret=thisG*0.05, nett=thisG-ret-c.bc; return `<tr><td class="tag">${c.id}</td><td>${subName(c.k)}</td><td class="n">${RM(c.gross)}</td><td class="n">${RM(c.prev)}</td><td class="n">${RM(ret)}</td><td class="n" style="color:${c.bc?'var(--bad)':'inherit'}">${c.bc?'−'+RM(c.bc):'—'}</td><td class="n"><b>${RM(nett)}</b></td><td>${pill(c.st)}</td></tr>`;}).join('')}
+    </tbody></table></div></div>
+    <div class="panel"><div class="ph"><h3>Back-charges</h3>${own?'':'<button class="btn sm" type="button" data-toast="New back-charge notice (demo)">New back-charge</button>'}</div><div class="list">
+    ${D.backcharges.filter(keep).map(b=>`<div class="li"><div class="t"><b>${b.t}</b><p><span class="tag">${b.id}</span> · ${subName(b.k)}</p></div><span class="num">${RM(b.amt)}</span>${pill(b.st)}</div>`).join('')||'<p class="sub" style="margin:0">No back-charges.</p>'}
+    </div><p class="sub" style="margin:0">Each back-charge carries photos and the signed notice. Payment disputes follow CIPAA 2012.</p></div>`;
+  if(S.subTab==='rating') body = `<div class="panel"><div class="tbl"><table><thead><tr><th>Company</th><th class="n">Safety</th><th class="n">Quality</th><th class="n">On time</th><th class="n">Manpower</th><th class="n">Overall</th><th>Use again?</th></tr></thead><tbody>
+    ${subs.slice().sort((a,b)=>avg(b.r)-avg(a.r)).map(s=>{const o=avg(s.r); return `<tr><td><b>${s.n}</b><br><span class="tag">${s.trade}</span></td>${s.r.map(v=>`<td class="n">${stars(v)}</td>`).join('')}<td class="n"><b>${stars(o)}</b> <span class="tag">/ 5</span></td><td>${pill(o>=4?'Approved':o>=3.4?'Under review':'On hold').replace(/>(Approved|Under review|On hold)</,'>'+(o>=4?'Preferred':o>=3.4?'With conditions':'Not recommended')+'<')}</td></tr>`;}).join('')}
+    </tbody></table></div><p class="sub" style="margin:0">Scores are calculated monthly from hazards, NCRs, schedule slippage and gate attendance, then reviewed by the site manager. They carry over to the next tender.</p></div>`;
+  return `
+    <div class="head"><div><span class="eyebrow">${own?'Your company · '+subName(MY_SUB):'Subcontract management'}</span><h1>Subcontractors</h1><p class="sub">${own?'Your package, claims, back-charges and performance score on this project. Other subcontractors are not visible to you.':'Registration and prequalification, work packages, claims and back-charges, and performance ratings.'}</p></div>
+      ${own?'<button class="btn pri" type="button" data-toast="Claim form opened (demo)">Submit claim</button>':'<button class="btn pri" type="button" data-toast="Onboarding invitation link created (demo)">Invite subcontractor</button>'}</div>
+    <div class="grid g4">
+      ${own?kpi('Package value',RMk(totVal),subs[0].pkg):kpi('Subcontractors on site',subs.length,`${subs.reduce((a,s)=>a+s.men,0)} workers today`)}
+      ${kpi('Claimed to date',RMk(totClaim),`${(totClaim/totVal*100).toFixed(0)}% of subcontract value`)}
+      ${own?kpi('Your score',avg(subs[0].r).toFixed(1)+'<small> / 5</small>','On time is your lowest score (3.5)','caution'):kpi('Documents expired / expiring',`${D.subs.filter(s=>s.st==='Docs expired').length} / ${D.subs.filter(s=>s.st==='Expiring').length}`,'Cahaya Bata insurance lapsed 12 Oct','alert')}
+      ${kpi('Claims awaiting action',D.subClaims.filter(keep).filter(c=>c.st==='Submitted'||c.st==='On hold').length,'Pay within 30 days of certification')}
+    </div>
+    ${tabs('subTab',[['register',own?'Company profile':'Register & prequalification'],['packages','Work packages'],['pay','Claims & back-charges'],['rating','Performance']])}
+    ${body}`;
+};
+
+function subModal(k){
+  const s=D.subs.find(x=>x.k===k); if(!s) return;
+  const exp=s.st==='Docs expired';
+  const docs=[['SSM company registration','Valid',true],['CIDB registration ('+s.cidb+')','Valid to 2027-06-30',true],['Contractor all-risk insurance & workmen\'s compensation','Expires '+s.ins,!exp],
+    ['PERKESO registration of workers','Up to date',true],['FOMEMA & work permits (foreign workers)',exp?'3 workers pending':'All valid',!exp],['CIDB green cards',`${s.men} of ${s.men} valid`,true],['Signed HIRARC & method statement','Submitted',true]];
+  openModal(`<div class="mh"><div><span class="tag">${s.trade} · ${s.cidb}</span><h2>${s.n}</h2></div><button class="x" type="button" data-close aria-label="Close">×</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${pill(s.st)}<span class="pill">${s.men} workers on site</span></div>
+    <div><h3>Prequalification documents</h3><div class="list">${docs.map(d=>`<div class="li"><span class="sev ${d[2]?'ok':'bad'}"></span><div class="t"><b>${d[0]}</b><p>${d[1]}</p></div></div>`).join('')}</div></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btn" type="button" data-toast="Reminder logged for ${s.n} (demo)">Request updated documents</button></div>`);
+}
+
+V.guide = () => {
+  const canEdit = S.role==='manager'||S.role==='office';
+  let body='';
+  if(S.guideTab==='gloss'){
+    const cats=[...new Set(D.gloss.map(g=>g[2]))];
+    body = `<div class="panel"><label class="f" for="glossQ" style="max-width:420px">Search abbreviations<input id="glossQ" type="search" placeholder="e.g. PTW, retention, DOSH" autocomplete="off"></label>
+      <div class="tbl"><table><thead><tr><th>Abbreviation</th><th>Meaning</th><th>Area</th></tr></thead><tbody id="glossBody">
+      ${D.gloss.slice().sort((a,b)=>a[0].localeCompare(b[0])).map(g=>`<tr data-gloss="${esc((g[0]+' '+g[1]+' '+g[2]).toLowerCase())}"><td class="mono"><b>${g[0]}</b></td><td>${g[1]}</td><td class="sub">${g[2]}</td></tr>`).join('')}
+      </tbody></table></div><p class="sub" id="glossNone" style="margin:0" hidden>No match. Ask the document controller to add it.</p>
+      <p class="sub" style="margin:0">${D.gloss.length} terms across ${cats.length} areas. Tap any abbreviation elsewhere in the app to see its meaning.</p></div>`;
+  }
+  if(S.guideTab==='std') body = `<div class="panel"><div class="tbl"><table><thead><tr><th>Reference</th><th>Title</th><th>What it covers on site</th><th>Used in</th></tr></thead><tbody>
+    ${D.standards.map(s=>`<tr><td class="mono"><b>${s[0]}</b></td><td>${s[1]}</td><td class="sub">${s[2]}</td><td class="sub">${s[3]}</td></tr>`).join('')}
+    </tbody></table></div><p class="sub" style="margin:0">Sample list for the draft. Confirm the current edition of each act and standard with your SHE and QA teams before release.</p></div>`;
+  if(S.guideTab==='sop') body = `<div class="panel"><div class="ph"><h3>Company procedures & templates</h3>${canEdit?'<button class="btn sm pri" type="button" data-toast="Upload new version (demo)">Upload new version</button>':''}</div><div class="tbl"><table><thead><tr><th>Doc no.</th><th>Title</th><th class="n">Version</th><th>Owner</th><th>Updated</th><th>Status</th><th></th></tr></thead><tbody>
+    ${D.sops.filter(d=>canEdit||d.st==='Approved').map(d=>`<tr><td class="tag">${d.no}</td><td>${d.t}</td><td class="n">${d.v}</td><td class="sub">${d.own}</td><td class="num">${d.up}</td><td>${pill(d.st)}</td><td><button class="btn sm" type="button" data-toast="Opening ${d.no} v${d.v} (demo)">Open</button></td></tr>`).join('')}
+    </tbody></table></div><p class="sub" style="margin:0">${canEdit?'Only approved versions are visible to workers and subcontractors. Old versions are kept for audit.':'You see the latest approved version only.'}</p></div>`;
+  if(S.guideTab==='codes') body = `<div class="grid g2">
+    <div class="panel"><h3>Drawing number format</h3>
+      <p style="margin:0;font-family:var(--f-mono);font-size:22px;letter-spacing:.04em"><span style="color:var(--primary)">STR</span>-<span style="color:var(--warn)">B</span>-<span style="color:var(--ok)">412</span></p>
+      <div class="list"><div class="li"><div class="t"><b style="color:var(--primary)">STR</b><p>Discipline code</p></div></div><div class="li"><div class="t"><b style="color:var(--warn)">B</b><p>Block or zone (A, B, POD for podium, EXT for external works)</p></div></div><div class="li"><div class="t"><b style="color:var(--ok)">412</b><p>Sheet number: 1xx general, 2xx plans, 3xx sections, 4xx details, 5xx elevations</p></div></div></div></div>
+    <div class="panel"><h3>Discipline codes</h3><div class="tbl"><table><tbody>
+      ${[['ARC','Architectural'],['STR','Structural (C&S)'],['MEP','Mechanical, electrical & plumbing'],['CIV','Civil & infrastructure'],['LAN','Landscape'],['SD','Shop drawing (by subcontractor or supplier)']].map(r=>`<tr><td class="mono"><b>${r[0]}</b></td><td>${r[1]}</td></tr>`).join('')}
+    </tbody></table></div></div>
+    <div class="panel"><h3>Revision & status codes</h3><div class="tbl"><table><tbody>
+      ${[['A, B, C…','Design revisions by consultants'],['0, 1, 2…','Shop drawing submissions'],['IFC','Issued for construction: build from this'],['FA','For approval: do not build'],['FI','For information only'],['AWC','Approved with comments'],['SS','Superseded: remove from site']].map(r=>`<tr><td class="mono"><b>${r[0]}</b></td><td>${r[1]}</td></tr>`).join('')}
+    </tbody></table></div></div>
+    <div class="panel"><h3>Record numbering in this app</h3><div class="tbl"><table><tbody>
+      ${[['HZ-0141','Hazard report'],['PTW-0388','Permit to work'],['RFI-062','Request for information'],['NCR-019','Non-conformance report'],['RFA-311','Inspection request'],['VO-08','Variation order'],['MR-1207','Material request'],['SC-ACU-09','Subcon claim: company code + claim no.'],['BC-014','Back-charge'],['SOP-SHE-003','Procedure: department + number']].map(r=>`<tr><td class="mono"><b>${r[0]}</b></td><td>${r[1]}</td></tr>`).join('')}
+    </tbody></table></div></div></div>`;
+  return `
+    <div class="head"><div><span class="eyebrow">Reference</span><h1>Guide & standards</h1><p class="sub">Abbreviations, the regulations and standards the project works to, company procedures, and numbering conventions. Everyone on the project sees the same reference.</p></div></div>
+    ${tabs('guideTab',[['gloss','Abbreviations'],['std','Regulations & standards'],['sop','Company SOPs'],['codes','Drawing & document codes']])}
+    ${body}`;
+};
+
 V.map = () => {
   const F = [
     ['Safety',['Hazard reporting with photo & location','Permit to work (height, hot work, lifting, confined space)','Toolbox talks with multilingual sign-in','CIDB green card & training expiry alerts','Incident & near-miss log, draft JKKP forms','Safety KPIs: LTI-free days, safe man-hours','PPE & scaffold inspection checklists'],['MVP','MVP','MVP','MVP','Phase 2','MVP','Phase 2']],
@@ -705,6 +857,8 @@ V.map = () => {
     ['Architecture & design',['Drawing register with revision control','Superseded-drawing alerts on site','Mark-up & RFI from a drawing','Shop drawing & material submissions','BIM / IFC model viewer'],['MVP','MVP','Phase 2','Phase 2','Phase 3']],
     ['BQ & cost',['BQ import from Excel (SMM2 structure)','Progress measurement per BQ item','Variation orders & approvals','Monthly progress claims & retention','Cost vs budget, cash flow S-curve'],['MVP','MVP','MVP','Phase 2','Phase 2']],
     ['Materials',['Material requests & approval','Delivery order check-in vs PO','Stock levels & minimum alerts','Wastage tracking vs BQ quantities','Supplier performance'],['MVP','MVP','MVP','Phase 2','Phase 3']],
+    ['Subcontractors',['Register with SSM, CIDB grade, insurance, PERKESO, FOMEMA','Expiry alerts & gate block on expired documents','Work packages linked to BQ & schedule','Subcon claims, retention & back-charges','Performance rating carried to next tender','Subcon portal: each company sees only its own data'],['MVP','MVP','MVP','MVP','Phase 2','MVP']],
+    ['Guide & standards',['Searchable abbreviation glossary','Regulations & standards register (Acts, MS, CIDB, JKR)','Company SOPs & templates with version control','Drawing & document numbering conventions','Tap-to-explain abbreviations anywhere in the app'],['MVP','MVP','MVP','MVP','Phase 2']],
     ['Plant & equipment',['Equipment register & status','DOSH PMA certificate tracking','Operator daily pre-use checklist','Service schedule & breakdown log'],['Phase 2','Phase 2','Phase 2','Phase 2']],
     ['Site network',['Access point status & coverage by zone','Guest Wi-Fi vouchers for visitors','CCTV & IoT sensor health','Wind, dust & noise alerts'],['MVP','Phase 2','Phase 2','Phase 3']],
     ['Platform',['Role-based access for all four user types','Mobile-first: phone layout, large buttons, works with gloves','Offline-first: forms, photos and sign-ins queue on the phone and sync later','Project switcher & head-office portfolio across sites','Bahasa Malaysia, English, Bengali, Vietnamese, Nepali','PDPA: consent for face ID, face blurring on photos, data kept in Malaysia','Audit trail of every approval'],['MVP','MVP','MVP','MVP','MVP','MVP','MVP']]
@@ -712,7 +866,7 @@ V.map = () => {
   return `
     <div class="head"><div><span class="eyebrow">About this draft</span><h1>Feature map</h1><p class="sub">Everything proposed for the app, with a suggested release phase. MVP = first release for one pilot site.</p></div></div>
     <div class="panel"><h2>Who uses what</h2><div class="tbl"><table><thead><tr><th>Module</th><th>Head office / Client</th><th>Site manager</th><th>Worker / Subcon</th><th>Site IT</th></tr></thead><tbody>
-      ${[['Safety','KPIs, incidents','Approve permits, close hazards','Report hazards, sign talks','Sensor alerts'],['Site operations','Read diary & progress','Write diary, schedule, RFIs','Check in, see tasks','—'],['Drawings','View, approve','Upload, distribute','View latest revision','—'],['BQ & cost','Approve VOs & claims','Record progress','—','—'],['Materials','Spend overview','Approve requests','Request materials (foreman)','—'],['Site network','—','Status','Connect','Full control']].map(r=>`<tr><td><b>${r[0]}</b></td>${r.slice(1).map(c=>`<td class="sub">${c}</td>`).join('')}</tr>`).join('')}
+      ${[['Safety','KPIs, incidents','Approve permits, close hazards','Report hazards, sign talks','Sensor alerts'],['Site operations','Read diary & progress','Write diary, schedule, RFIs','Check in, see tasks','—'],['Drawings','View, approve','Upload, distribute','View latest revision','—'],['BQ & cost','Approve VOs & claims','Record progress','—','—'],['Materials','Spend overview','Approve requests','Request materials (foreman)','—'],['Subcontractors','All companies, ratings','Onboard, certify claims, back-charge','Own company only: claims, score','—'],['Site network','—','Status','Connect','Full control'],['Guide & standards','View, approve SOPs','View, upload SOPs','View approved','View']].map(r=>`<tr><td><b>${r[0]}</b></td>${r.slice(1).map(c=>`<td class="sub">${c}</td>`).join('')}</tr>`).join('')}
     </tbody></table></div></div>
     <div class="grid g3">${F.map(([t,items,ph])=>`<div class="panel feat"><h3>${t}</h3><ul>${items.map((it,i)=>`<li>${it}<span class="phase">${ph[i]}</span></li>`).join('')}</ul></div>`).join('')}</div>`;
 };
@@ -772,7 +926,8 @@ function dwgModal(no){
 
 /* ---------- events ---------- */
 document.addEventListener('click', e=>{
-  const t=e.target.closest('button,[data-dwgopen],[data-projopen],[data-scrim]'); if(!t) return;
+  const t=e.target.closest('button,[data-dwgopen],[data-projopen],[data-subopen],[data-scrim]'); if(!t) return;
+  if(t.dataset.subopen){ subModal(t.dataset.subopen); return; }
   if(t.id==='syncBtn'){
     S.online=!S.online;
     if(S.online){const n=S.queue; S.queue=0; render(); toast(n?`Signal back. ${n} item${n>1?'s':''} sent.`:'Signal back. Everything is up to date.');}
@@ -796,6 +951,13 @@ document.addEventListener('keydown', e=>{
   if(e.key==='Escape') closeLayer();
   if(e.key==='Enter' && e.target.dataset && e.target.dataset.dwgopen) dwgModal(e.target.dataset.dwgopen);
   if(e.key==='Enter' && e.target.dataset && e.target.dataset.projopen) selectProject(e.target.dataset.projopen);
+  if(e.key==='Enter' && e.target.dataset && e.target.dataset.subopen) subModal(e.target.dataset.subopen);
+});
+document.addEventListener('input', e=>{
+  if(e.target.id!=='glossQ') return;
+  const q=e.target.value.trim().toLowerCase(); let shown=0;
+  document.querySelectorAll('#glossBody tr').forEach(r=>{const m=!q||r.dataset.gloss.includes(q); r.hidden=!m; if(m) shown++;});
+  $('#glossNone').hidden=shown>0;
 });
 function selectProject(k){
   S.proj=k; render(); window.scrollTo(0,0);
