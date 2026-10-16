@@ -43,9 +43,15 @@ button,input,select,textarea{font:inherit;color:inherit}
   display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:8px;font-family:var(--f-display);font-weight:700;font-size:22px;letter-spacing:.02em;text-transform:uppercase}
 .brand svg{width:26px;height:26px}
-.proj{display:flex;flex-direction:column;line-height:1.2;min-width:0;padding-left:12px;border-left:1px solid var(--line)}
-.proj b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.proj span{font-size:12px;color:var(--muted)}
+.proj{display:flex;flex-direction:column;gap:2px;line-height:1.2;min-width:0;padding-left:12px;border-left:1px solid var(--line)}
+.proj span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.proj select{font-weight:600;max-width:280px}
+.sync{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--ok-soft);color:var(--ok);border-radius:20px;padding:5px 11px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap}
+.sync::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.sync.off{background:var(--warn-soft);color:var(--warn)}
+.offline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--warn-soft);color:var(--warn);border-radius:var(--r);padding:10px 14px;font-size:13.5px}
+.offline b{color:var(--fg)}
+nav.side .ls{display:none}
 .spacer{flex:1}
 .ctl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 select{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:6px 8px;font-size:13px}
@@ -167,11 +173,23 @@ label.f input,label.f select,label.f textarea{background:var(--surface-2);border
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:var(--r);z-index:30;font-size:13.5px;max-width:calc(100% - 32px)}
 
 @media (max-width:860px){
+  /* phone: bottom tab bar, thumb-sized targets */
   .shell{grid-template-columns:minmax(0,1fr)}
-  nav.side{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:6px max(10px,env(safe-area-inset-left,0px));gap:4px;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--toph,58px));z-index:4}
+  nav.side{position:fixed;left:0;right:0;bottom:0;z-index:6;flex-direction:row;overflow-x:auto;gap:2px;border-right:0;border-top:1px solid var(--line);
+    padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
   nav.side .grp{display:none}
-  nav.side button{width:auto;white-space:nowrap;padding:7px 10px}
-  .proj{display:none}
+  nav.side button{position:relative;flex:1 0 64px;width:auto;flex-direction:column;justify-content:center;gap:3px;padding:6px 4px;font-size:11px;min-height:52px}
+  nav.side button svg{width:22px;height:22px}
+  nav.side .lf{display:none} nav.side .ls{display:inline}
+  nav.side .badge{position:absolute;top:2px;right:calc(50% - 22px);margin:0;padding:0 5px;font-size:10px}
+  main{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+  .toast{bottom:calc(86px + env(safe-area-inset-bottom,0px))}
+  .proj{border-left:0;padding-left:0;flex:1 1 160px}
+  .proj select{max-width:100%;width:100%}
+  .brand{font-size:19px}
+  .ctl-l{display:none}
+  .btn,.chip{min-height:40px}
+  .btn.sm{min-height:34px}
   h1{font-size:26px}
 }
 @media (prefers-reduced-motion:no-preference){.panel,.kpi{animation:in .25s ease-out both}@keyframes in{from{transform:translateY(4px)}to{transform:none}}}
@@ -182,9 +200,11 @@ label.f input,label.f select,label.f textarea{background:var(--surface-2);border
     <svg viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="4" fill="var(--hivis)"/><path d="M6 19 13 6l7 13" stroke="var(--on-hivis)" stroke-width="2.4" fill="none" stroke-linejoin="round"/><path d="M9 14h8" stroke="var(--on-hivis)" stroke-width="2.4"/></svg>
     SiteLink
   </div>
-  <div class="proj"><b id="projName">Residensi Melati — Block B</b><span>18-storey condominium · Setapak, KL</span></div>
+  <label class="proj" for="proj"><span>Project</span>
+    <select id="proj"></select></label>
   <div class="spacer"></div>
-  <label class="ctl" for="role">Viewing as
+  <button class="sync" id="syncBtn" type="button" title="Tap to simulate losing signal"></button>
+  <label class="ctl" for="role"><span class="ctl-l">Viewing as</span>
     <select id="role">
       <option value="office">Head office / Client</option>
       <option value="manager" selected>Site manager</option>
@@ -329,21 +349,30 @@ const D = {
   ]
 };
 
+const PROJECTS = [
+  {k:'melati',n:'Residensi Melati — Block B',d:'18-storey condominium',loc:'Setapak, KL',prog:64.2,plan:72,cost:'−2.1%',costOk:true,lti:212,haz:1,net:'3/5 APs',netOk:false,men:159},
+  {k:'kiara',n:'Menara Kiara Office Tower',d:'32-storey office, 4 basements',loc:'Mont Kiara, KL',prog:38.5,plan:36,cost:'+0.8%',costOk:true,lti:96,haz:3,net:'8/8 APs',netOk:true,men:244},
+  {k:'iskandar',n:'Taman Seri Iskandar Ph. 2',d:'240 units double-storey terrace',loc:'Johor Bahru',prog:81.0,plan:84,cost:'+4.6%',costOk:false,lti:340,haz:0,net:'4G only',netOk:false,men:118},
+  {k:'kuantan',n:'Klinik Kesihatan Kuantan',d:'2-storey clinic, JKR project',loc:'Kuantan, Pahang',prog:12.4,plan:15,cost:'−0.4%',costOk:true,lti:58,haz:2,net:'Not set up',netOk:false,men:41}
+];
+
 /* ---------- state ---------- */
-let S = {role:'manager', view:'home', safetyTab:'hazards', opsTab:'diary', bqTab:'bq', dwgFilter:'All', toolbox:false, checkedIn:false};
+let S = {role:'manager', view:'home', safetyTab:'hazards', opsTab:'diary', bqTab:'bq', dwgFilter:'All', toolbox:false, checkedIn:false, proj:'melati', online:true, queue:0};
 try{const r=localStorage.getItem('sitelink.role'); if(r) S.role=r;}catch(e){}
 $('#role').value=S.role;
+$('#proj').innerHTML=PROJECTS.map(p=>`<option value="${p.k}">${p.n}</option>`).join('');
+const P = () => PROJECTS.find(p=>p.k===S.proj);
 
 const NAV = [
-  {k:'home',l:'Overview',i:'home',grp:'Project'},
-  {k:'safety',l:'Safety',i:'safety',badge:()=>D.hazards.filter(h=>h.st==='Open').length},
-  {k:'ops',l:'Site operations',i:'ops'},
-  {k:'design',l:'Drawings & design',i:'design'},
-  {k:'bq',l:'BQ & cost',i:'bq',grp:'Commercial'},
-  {k:'mat',l:'Materials',i:'mat'},
-  {k:'plant',l:'Plant & equipment',i:'plant',grp:'Site'},
-  {k:'net',l:'Site network',i:'net'},
-  {k:'map',l:'Feature map',i:'map',grp:'About this draft'}
+  {k:'home',l:'Overview',s:'Home',i:'home',grp:'Project'},
+  {k:'safety',l:'Safety',s:'Safety',i:'safety',badge:()=>D.hazards.filter(h=>h.st==='Open').length},
+  {k:'ops',l:'Site operations',s:'Site',i:'ops'},
+  {k:'design',l:'Drawings & design',s:'Drawings',i:'design'},
+  {k:'bq',l:'BQ & cost',s:'BQ',i:'bq',grp:'Commercial'},
+  {k:'mat',l:'Materials',s:'Materials',i:'mat'},
+  {k:'plant',l:'Plant & equipment',s:'Plant',i:'plant',grp:'Site'},
+  {k:'net',l:'Site network',s:'Network',i:'net'},
+  {k:'map',l:'Feature map',s:'Features',i:'map',grp:'About this draft'}
 ];
 const ROLE_NAV = {
   office:['home','safety','ops','design','bq','mat','map'],
@@ -360,7 +389,7 @@ function renderNav(){
   NAV.filter(n=>allowed.includes(n.k)).forEach(n=>{
     if(n.grp && n.grp!==lastGrp){h+=`<div class="grp">${n.grp}</div>`; lastGrp=n.grp;}
     const b = n.badge ? n.badge() : 0;
-    h+=`<button type="button" data-go="${n.k}" ${S.view===n.k?'aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${I[n.i]}</svg>${n.l}${b?`<span class="badge">${b}</span>`:''}</button>`;
+    h+=`<button type="button" data-go="${n.k}" ${S.view===n.k?'aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${I[n.i]}</svg><span class="lf">${n.l}</span><span class="ls">${n.s}</span>${b?`<span class="badge">${b}</span>`:''}</button>`;
   });
   $('#nav').innerHTML=h;
 }
@@ -370,13 +399,23 @@ const pill = (txt) => {
   const map = {ok:['Active','Online','Operating','On track','Closed','Approved','IFC','Answered','Expected','Done'],
                warn:['In action','Pending','Pending approval','Weak','At risk','Idle','For approval','Comments','Submitted','Rectification','In progress'],
                bad:['Open','Delayed','Offline','Breakdown','Superseded'],
+               saved:['Saved offline'],
                info:['Draft','Not started']};
   const cls = Object.keys(map).find(k=>map[k].includes(txt))||'';
   return `<span class="pill ${cls}">${esc(txt)}</span>`;
 };
 const kpi = (l,v,d,cls='') => `<div class="kpi ${cls}"><span class="l">${l}</span><span class="v">${v}</span>${d?`<span class="d">${d}</span>`:''}</div>`;
 const tabs = (key, list) => `<div class="tabs" role="tablist">${list.map(([k,l])=>`<button type="button" role="tab" data-tab="${key}:${k}" aria-selected="${S[key]===k}">${l}</button>`).join('')}</div>`;
-const demo = () => `<div class="demo"><b>Draft prototype.</b> All names, figures and records are sample data. Switch “Viewing as” to see each user's version. <button type="button" class="link" data-go="map">See the full feature map</button></div>`;
+const demo = () => `<div class="demo"><b>Draft prototype.</b> All names, figures and records are sample data${S.proj!=='melati'?` (detail screens reuse Residensi Melati's sample records)`:''}. Switch “Viewing as” to see each user's version, or tap the green “Synced” chip to simulate losing signal. <button type="button" class="link" data-go="map">See the full feature map</button></div>`;
+const offlineBar = () => S.online ? '' : `<div class="offline" role="status"><b>No signal.</b> You can keep working. ${S.queue?`${S.queue} item${S.queue>1?'s':''} saved on this phone will`:'Anything you record will be saved on this phone and'} send when the connection returns.</div>`;
+
+function portfolio(){
+  return `<div class="panel"><div class="ph"><h2>All projects</h2><span class="sub" style="font-size:12px">Tap a project to open it</span></div><div class="tbl"><table><thead><tr><th>Project</th><th>Progress vs plan</th><th class="n">Cost vs budget</th><th class="n">Days w/o LTI</th><th class="n">Open hazards</th><th class="n">On site</th><th>Site network</th></tr></thead><tbody>
+    ${PROJECTS.map(p=>{const gap=p.prog-p.plan; return `<tr class="click" data-projopen="${p.k}" tabindex="0"><td><b>${p.n}</b><br><span class="tag">${p.d} · ${p.loc}</span></td>
+      <td><div class="bar ${gap<-5?'low':gap<0?'mid':''}" style="width:120px"><i style="width:${p.prog}%"></i></div><span class="tag">${p.prog}% · <span style="color:${gap<0?'var(--bad)':'var(--ok)'}">${gap>0?'+':''}${gap.toFixed(1)}</span></span></td>
+      <td class="n" style="color:${p.costOk?'var(--ok)':'var(--bad)'}">${p.cost}</td><td class="n">${p.lti}</td><td class="n" style="color:${p.haz?'var(--bad)':'inherit'}">${p.haz}</td><td class="n">${p.men}</td><td>${pill(p.netOk?'Online':'Weak').replace(p.netOk?'Online':'Weak',p.net)}</td></tr>`;}).join('')}
+  </tbody></table></div></div>`;
+}
 
 function bqTotals(){
   let contract=0, done=0;
@@ -413,9 +452,11 @@ const V = {};
 V.home = () => {
   const t=bqTotals();
   if(S.role==='office') return `
-    <div class="head"><div><span class="eyebrow">Head office · Portfolio view</span><h1>Residensi Melati — Block B</h1><p class="sub">Contract period Apr 2025 – Nov 2027 · Main contractor view for directors and the client's representative</p></div>
+    <div class="head"><div><span class="eyebrow">Head office · ${PROJECTS.length} active projects</span><h1>Portfolio</h1><p class="sub">Directors and clients' representatives see every site at a glance, then drill into one.</p></div>
       <button class="btn" type="button" data-toast="Monthly progress report queued (demo)">Generate monthly report</button></div>
     ${demo()}
+    ${portfolio()}
+    <div class="head"><div><span class="eyebrow">Selected project · ${P().loc}</span><h2>${P().n}</h2></div></div>
     <div class="grid g4">
       ${kpi('Physical progress','64.2<small>%</small>','<span class="down">▼ 7.8% behind plan (72%)</span>','caution')}
       ${kpi('Work done to date',RMk(t.done),`of ${RMk(t.contract)} contract sum`)}
@@ -446,7 +487,7 @@ V.home = () => {
     <div class="hero-cta"><h2>See something unsafe?</h2><p style="margin:0">Report it in 30 seconds. Add a photo, pick the level, and the safety officer gets it straight away.</p><button class="btn" type="button" data-report>Report hazard</button></div>
     <div class="grid g2">
       <div class="panel"><div class="ph"><h2>Site check-in</h2>${S.checkedIn?pill('On track').replace('On track','Checked in'):''}</div>
-        <div class="checkin"><div><span class="big num">${S.checkedIn?'07:02':'--:--'}</span><p class="sub" style="margin:0">${S.checkedIn?'Gate 1 · face ID':'Scan at gate turnstile, or check in here'}</p></div>
+        <div class="checkin"><div><span class="big num">${S.checkedIn?'07:02':'--:--'}</span><p class="sub" style="margin:0">${S.checkedIn?'Gate 1 · face ID':'Scan at gate turnstile, or check in here'}</p><p class="sub" style="margin:2px 0 0;font-size:12px">Face ID used only for site access, with your consent (PDPA).</p></div>
         <button class="btn pri" type="button" data-checkin ${S.checkedIn?'disabled':''}>${S.checkedIn?'Checked in':'Check in now'}</button></div></div>
       <div class="panel"><div class="ph"><h2>Today's toolbox talk</h2>${S.toolbox?pill('Done'):pill('Pending')}</div>
         <p style="margin:0"><b>Working at height: edge protection & harness anchoring</b><br><span class="sub">07:15 · Assembly area · Siti Aminah (SHO) · BM / EN / বাংলা / Tiếng Việt</span></p>
@@ -666,7 +707,7 @@ V.map = () => {
     ['Materials',['Material requests & approval','Delivery order check-in vs PO','Stock levels & minimum alerts','Wastage tracking vs BQ quantities','Supplier performance'],['MVP','MVP','MVP','Phase 2','Phase 3']],
     ['Plant & equipment',['Equipment register & status','DOSH PMA certificate tracking','Operator daily pre-use checklist','Service schedule & breakdown log'],['Phase 2','Phase 2','Phase 2','Phase 2']],
     ['Site network',['Access point status & coverage by zone','Guest Wi-Fi vouchers for visitors','CCTV & IoT sensor health','Wind, dust & noise alerts'],['MVP','Phase 2','Phase 2','Phase 3']],
-    ['Platform',['Role-based access for all four user types','Works offline, syncs when signal returns','Bahasa Malaysia, English, Bengali, Vietnamese, Nepali','Multi-project portfolio for head office','Audit trail & PDPA-compliant data handling'],['MVP','MVP','MVP','Phase 2','MVP']]
+    ['Platform',['Role-based access for all four user types','Mobile-first: phone layout, large buttons, works with gloves','Offline-first: forms, photos and sign-ins queue on the phone and sync later','Project switcher & head-office portfolio across sites','Bahasa Malaysia, English, Bengali, Vietnamese, Nepali','PDPA: consent for face ID, face blurring on photos, data kept in Malaysia','Audit trail of every approval'],['MVP','MVP','MVP','MVP','MVP','MVP','MVP']]
   ];
   return `
     <div class="head"><div><span class="eyebrow">About this draft</span><h1>Feature map</h1><p class="sub">Everything proposed for the app, with a suggested release phase. MVP = first release for one pilot site.</p></div></div>
@@ -677,9 +718,16 @@ V.map = () => {
 };
 
 /* ---------- render ---------- */
+function renderSync(){
+  const b=$('#syncBtn');
+  b.className='sync'+(S.online?'':' off');
+  b.textContent=S.online?'Synced':`Offline${S.queue?' · '+S.queue+' queued':''}`;
+  b.setAttribute('aria-label',S.online?'Online and synced. Tap to simulate losing signal':'Offline. Tap to simulate signal returning');
+}
 function render(){
-  renderNav();
-  $('#view').innerHTML = V[S.view]();
+  renderNav(); renderSync();
+  $('#proj').value=S.proj;
+  $('#view').innerHTML = offlineBar() + V[S.view]();
   const th=$('#top').offsetHeight; document.documentElement.style.setProperty('--toph',th+'px');
 }
 
@@ -705,7 +753,8 @@ function reportModal(){
       </div>
       <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:12.5px;color:var(--muted);padding:0;margin-bottom:4px">How serious?</legend>
         <div class="seg"><label><input type="radio" name="sev" value="ok" id="sevLow"> Low</label><label><input type="radio" name="sev" value="warn" id="sevMed" checked> Medium</label><label><input type="radio" name="sev" value="bad" id="sevHigh"> High: stop work</label></div></fieldset>
-      <label class="f" for="hzPhoto">Photo (optional)<input type="file" id="hzPhoto" accept="image/*"></label>
+      <label class="f" for="hzPhoto">Photo (optional) · faces are blurred automatically before sharing<input type="file" id="hzPhoto" accept="image/*"></label>
+      ${S.online?'':'<p class="offline" style="margin:0">No signal. This report will be saved on your phone and sent automatically.</p>'}
       <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" type="button" data-close>Cancel</button><button class="btn hv" type="submit">Submit report</button></div>
     </form>`);
 }
@@ -723,7 +772,14 @@ function dwgModal(no){
 
 /* ---------- events ---------- */
 document.addEventListener('click', e=>{
-  const t=e.target.closest('button,[data-dwgopen],[data-scrim]'); if(!t) return;
+  const t=e.target.closest('button,[data-dwgopen],[data-projopen],[data-scrim]'); if(!t) return;
+  if(t.id==='syncBtn'){
+    S.online=!S.online;
+    if(S.online){const n=S.queue; S.queue=0; render(); toast(n?`Signal back. ${n} item${n>1?'s':''} sent.`:'Signal back. Everything is up to date.');}
+    else {render(); toast('Signal lost (simulated). The app keeps working offline.');}
+    return;
+  }
+  if(t.dataset.projopen){ selectProject(t.dataset.projopen); return; }
   if(t.matches('[data-scrim]') && e.target!==t) return;
   if(t.dataset.scrim!==undefined || t.dataset.close!==undefined){closeLayer();return;}
   if(t.dataset.go){ S.view=t.dataset.go; if(t.dataset.tab2){const [k,v]=t.dataset.tab2.split(':'); S[k]=v;} closeLayer(); render(); window.scrollTo(0,0); return; }
@@ -731,24 +787,31 @@ document.addEventListener('click', e=>{
   if(t.dataset.dwg){ S.dwgFilter=t.dataset.dwg; render(); return; }
   if(t.dataset.dwgopen){ dwgModal(t.dataset.dwgopen); return; }
   if(t.dataset.report!==undefined || t.id==='reportBtn'){ reportModal(); return; }
-  if(t.dataset.toolbox!==undefined){ S.toolbox=true; render(); toast('Attendance recorded for today\'s toolbox talk'); return; }
-  if(t.dataset.checkin!==undefined){ S.checkedIn=true; render(); toast('Checked in at 07:02 (demo)'); return; }
-  if(t.dataset.approveMr){ D.mr[+t.dataset.approveMr].st='Approved'; render(); toast('Material request approved. Purchasing notified (demo)'); return; }
+  if(t.dataset.toolbox!==undefined){ S.toolbox=true; if(!S.online) S.queue++; render(); toast(S.online?'Attendance recorded for today\'s toolbox talk':'Attendance saved on this phone. Will send when signal returns.'); return; }
+  if(t.dataset.checkin!==undefined){ S.checkedIn=true; if(!S.online) S.queue++; render(); toast(S.online?'Checked in at 07:02 (demo)':'Check-in saved offline at 07:02 (demo)'); return; }
+  if(t.dataset.approveMr){ D.mr[+t.dataset.approveMr].st='Approved'; if(!S.online) S.queue++; render(); toast(S.online?'Material request approved. Purchasing notified (demo)':'Approval saved offline. Will send when signal returns.'); return; }
   if(t.dataset.toast){ toast(t.dataset.toast); return; }
 });
 document.addEventListener('keydown', e=>{
   if(e.key==='Escape') closeLayer();
   if(e.key==='Enter' && e.target.dataset && e.target.dataset.dwgopen) dwgModal(e.target.dataset.dwgopen);
+  if(e.key==='Enter' && e.target.dataset && e.target.dataset.projopen) selectProject(e.target.dataset.projopen);
 });
+function selectProject(k){
+  S.proj=k; render(); window.scrollTo(0,0);
+  toast('Switched to '+P().n);
+}
+$('#proj').addEventListener('change', e=>selectProject(e.target.value));
 document.addEventListener('submit', e=>{
   if(e.target.id!=='hzForm') return;
   e.preventDefault();
   const what=$('#hzWhat').value.trim(); if(!what){ $('#hzWhat').focus(); return; }
   const sev=(document.querySelector('input[name="sev"]:checked')||{}).value||'warn';
   const id='HZ-0'+(142+D.hazards.length-3);
-  D.hazards.unshift({id,t:what,loc:$('#hzLoc').value,sev,by:'You',when:'Now',st:'Open'});
+  D.hazards.unshift({id,t:what,loc:$('#hzLoc').value,sev,by:'You',when:'Now',st:S.online?'Open':'Saved offline'});
+  if(!S.online) S.queue++;
   closeLayer(); S.view='safety'; S.safetyTab='hazards'; render();
-  toast(`${id} logged. It now shows in the safety officer's list (demo).`);
+  toast(S.online?`${id} logged. It now shows in the safety officer's list (demo).`:`${id} saved on this phone. It will send when signal returns.`);
 });
 $('#role').addEventListener('change', e=>{
   S.role=e.target.value; S.view='home';
