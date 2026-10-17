@@ -21,6 +21,43 @@ your phone is charging, alongside the real numbers.
   - Current (mA) and voltage (V)
   - Time to full, labelled with where the estimate comes from
 - **Demo mode** with a charger-wattage slider, for emulators or when unplugged.
+- **Open when charging (Android).** When switched on, ChargeVerse opens over the
+  lock screen as soon as you plug in and closes again when you unplug. While
+  charging the screen stays awake and dims after 1 minute without a touch. The
+  app asks on first launch, and you can change it from the ⚙ button.
+
+## Open when charging: how it works
+
+Since Android 8 apps can't react to the charger from the manifest, and since
+Android 10 they can't open themselves from the background. So:
+
+1. A **foreground service** (`ChargeWatcherService`, type `specialUse`) runs
+   only after the user turns the feature on. It shows a silent, minimised
+   "ChargeVerse is ready" notification and restarts after a reboot or update
+   (`BootReceiver`).
+2. On plug-in it posts a **full-screen notification**. When the phone is
+   locked, Android opens the charging screen immediately. When you're using
+   another app, it appears as a heads-up "tap to open" notification instead
+   of interrupting you.
+3. `MainActivity` shows over the lock screen only when the charger opened it,
+   keeps the screen on while charging, dims after 60 s idle, and closes on
+   unplug. If you opened the app yourself, it stays open.
+
+The settings sheet checks each requirement and links to the matching system
+page: notifications (Android 13+), full-screen alerts (Android 14+), battery
+optimization, and on OPPO / realme / OnePlus / Xiaomi / Vivo / Huawei phones the
+vendor **Auto-launch** setting, without which the system kills the watcher.
+
+### Google Play notes
+
+- Declare the `specialUse` foreground service in Play Console (App content →
+  Foreground service permissions) with a short video of the feature. The
+  justification text is already in `AndroidManifest.xml`.
+- `USE_FULL_SCREEN_INTENT`: on Android 14+ Play only grants it by default to
+  calling and alarm apps. Elsewhere the user can allow it from the settings
+  sheet. Without it, the app falls back to the "tap to open" notification.
+- The feature is off until the user opts in, and the persistent notification
+  explains why the app is running.
 
 ## Platform support
 
@@ -41,7 +78,8 @@ normalizes both; see `ChargeAnalyzer.normalizeCurrent`.
 
 Only the app source and the custom native files are committed. Generate the
 remaining platform boilerplate once with `flutter create`. It keeps existing
-files, so `MainActivity.kt` and `AppDelegate.swift` are preserved:
+files, so `AndroidManifest.xml`, the Kotlin sources and `AppDelegate.swift`
+are preserved:
 
 ```bash
 flutter create --org com.chargeverse --project-name charge_verse --platforms=android,ios .
@@ -62,7 +100,10 @@ lib/
   services/charge_analyzer.dart    unit normalization, smoothing, time to full, classification
   art/                             the three CustomPainter 3D themes + tiny 3D math
   ui/                              charging screen, stats panel, formatting
-android/.../MainActivity.kt        BatteryManager telemetry stream
+android/.../MainActivity.kt        battery telemetry, lock-screen/keep-awake/dim window, settings channel
+android/.../ChargeWatcherService.kt  charger watcher + full-screen plug-in notification
+android/.../AutoLaunch.kt          on/off flag, permission checks, notification channels
+android/.../BootReceiver.kt        restarts the watcher after reboot/update
 ios/Runner/AppDelegate.swift       UIDevice battery stream
 test/charge_analyzer_test.dart
 ```

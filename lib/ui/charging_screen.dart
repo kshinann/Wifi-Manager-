@@ -10,8 +10,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../art/art_frame.dart';
 import '../art/art_style.dart';
 import '../models/battery_reading.dart';
+import '../services/auto_launch_service.dart';
 import '../services/battery_service.dart';
 import '../services/charge_analyzer.dart';
+import 'auto_launch_sheet.dart';
 import 'formatting.dart';
 import 'stats_panel.dart';
 
@@ -25,8 +27,10 @@ class ChargingScreen extends StatefulWidget {
 class _ChargingScreenState extends State<ChargingScreen>
     with SingleTickerProviderStateMixin {
   static const _styleKey = 'art_style';
+  static const _autoLaunchPromptedKey = 'auto_launch_prompted';
 
   final _analyzer = ChargeAnalyzer();
+  final _autoLaunch = AutoLaunchService();
   final _frame = ValueNotifier(ArtFrame.initial);
   late final Ticker _ticker;
   StreamSubscription<BatteryReading>? _sub;
@@ -50,6 +54,7 @@ class _ChargingScreenState extends State<ChargingScreen>
     _ticker = createTicker(_onTick)..start();
     _loadStyle();
     _startSource();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybePromptAutoLaunch());
   }
 
   @override
@@ -67,6 +72,51 @@ class _ChargingScreenState extends State<ChargingScreen>
       setState(() => _style = ArtStyle.fromName(prefs.getString(_styleKey)));
     } catch (_) {
       // Preferences are a convenience; keep the default style.
+    }
+  }
+
+  /// Asks once, on first launch, whether to open automatically on plug-in.
+  Future<void> _maybePromptAutoLaunch() async {
+    if (!AutoLaunchService.isAvailable) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool(_autoLaunchPromptedKey) ?? false) return;
+      final status = await _autoLaunch.status();
+      if (!status.supported || status.enabled || !mounted) return;
+      await prefs.setBool(_autoLaunchPromptedKey, true);
+      if (!mounted) return;
+      final yes = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          icon: const Icon(Icons.bolt_rounded),
+          title: const Text('Open when charging?'),
+          content: const Text(
+            'ChargeVerse can appear over the lock screen every time you plug '
+            'in, and close when you unplug. It keeps a small silent '
+            'notification while it waits for the charger. You can change '
+            'this any time in settings.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Not now'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Turn on'),
+            ),
+          ],
+        ),
+      );
+      if (yes != true || !mounted) return;
+      final result = await _autoLaunch.setEnabled(true);
+      if (!mounted) return;
+      if (!result.fullyWorking || !result.batteryUnrestricted || result.hasAggressiveBatteryManager) {
+        // Show what still needs allowing (permissions, battery, OPPO auto-launch).
+        await AutoLaunchSheet.show(context, _autoLaunch);
+      }
+    } catch (_) {
+      // First-run prompt is best effort.
     }
   }
 
@@ -169,6 +219,9 @@ class _ChargingScreenState extends State<ChargingScreen>
                     demo: _demo,
                     demoLocked: _liveUnavailable,
                     onToggleDemo: _toggleDemo,
+                    onSettings: AutoLaunchService.isAvailable
+                        ? () => AutoLaunchSheet.show(context, _autoLaunch)
+                        : null,
                   ),
                   const SizedBox(height: 10),
                   _StylePicker(selected: _style, onSelected: _setStyle),
@@ -198,11 +251,13 @@ class _TopBar extends StatelessWidget {
     required this.demo,
     required this.demoLocked,
     required this.onToggleDemo,
+    this.onSettings,
   });
 
   final bool demo;
   final bool demoLocked;
   final VoidCallback onToggleDemo;
+  final VoidCallback? onSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -246,6 +301,12 @@ class _TopBar extends StatelessWidget {
             side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
           ),
         ),
+        if (onSettings != null)
+          IconButton(
+            tooltip: 'Open when charging',
+            onPressed: onSettings,
+            icon: const Icon(Icons.settings_rounded, color: Colors.white),
+          ),
       ],
     );
   }
