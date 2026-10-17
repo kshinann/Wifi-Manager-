@@ -15,6 +15,7 @@ import '../services/battery_service.dart';
 import '../services/charge_analyzer.dart';
 import 'auto_launch_sheet.dart';
 import 'formatting.dart';
+import 'setup_wizard.dart';
 import 'stats_panel.dart';
 
 class ChargingScreen extends StatefulWidget {
@@ -75,7 +76,7 @@ class _ChargingScreenState extends State<ChargingScreen>
     }
   }
 
-  /// Asks once, on first launch, whether to open automatically on plug-in.
+  /// On first launch, walks through turning on "open when charging".
   Future<void> _maybePromptAutoLaunch() async {
     if (!AutoLaunchService.isAvailable) return;
     try {
@@ -85,36 +86,7 @@ class _ChargingScreenState extends State<ChargingScreen>
       if (!status.supported || status.enabled || !mounted) return;
       await prefs.setBool(_autoLaunchPromptedKey, true);
       if (!mounted) return;
-      final yes = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          icon: const Icon(Icons.bolt_rounded),
-          title: const Text('Open when charging?'),
-          content: const Text(
-            'ChargeVerse can appear over the lock screen every time you plug '
-            'in, and close when you unplug. It keeps a small silent '
-            'notification while it waits for the charger. You can change '
-            'this any time in settings.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Not now'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Turn on'),
-            ),
-          ],
-        ),
-      );
-      if (yes != true || !mounted) return;
-      final result = await _autoLaunch.setEnabled(true);
-      if (!mounted) return;
-      if (!result.fullyWorking || !result.batteryUnrestricted || result.hasAggressiveBatteryManager) {
-        // Show what still needs allowing (permissions, battery, OPPO auto-launch).
-        await AutoLaunchSheet.show(context, _autoLaunch);
-      }
+      await SetupWizard.show(context, _autoLaunch);
     } catch (_) {
       // First-run prompt is best effort.
     }

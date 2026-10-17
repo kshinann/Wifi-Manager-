@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/auto_launch_service.dart';
+import 'setup_wizard.dart';
 
 /// Settings for "open automatically when charging", with a checklist of the
 /// system permissions it needs and buttons straight to each settings page.
@@ -132,12 +133,23 @@ class _AutoLaunchSheetState extends State<AutoLaunchSheet> {
                   _Check(
                     ok: null,
                     title: 'Auto-launch (${_brand(s.manufacturer)})',
-                    detail: 'Your phone also needs Auto-launch / Allow background '
-                        'activity turned on for ChargeVerse in App info.',
-                    action: 'App info',
-                    onTap: widget.service.openAppSettings,
+                    detail: 'Can\'t be checked automatically. Make sure Auto-launch '
+                        'is on for ChargeVerse.',
+                    action: 'Open',
+                    onTap: widget.service.openAutoLaunchSettings,
                   ),
               ],
+              const SizedBox(height: 8),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () async {
+                    await SetupWizard.show(context, widget.service);
+                    _refresh();
+                  },
+                  icon: const Icon(Icons.auto_fix_high_rounded),
+                  label: const Text('Run setup again'),
+                ),
+              ),
             ],
           ],
         ),

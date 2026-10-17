@@ -23,8 +23,10 @@ your phone is charging, alongside the real numbers.
 - **Demo mode** with a charger-wattage slider, for emulators or when unplugged.
 - **Open when charging (Android).** When switched on, ChargeVerse opens over the
   lock screen as soon as you plug in and closes again when you unplug. While
-  charging the screen stays awake and dims after 1 minute without a touch. The
-  app asks on first launch, and you can change it from the ⚙ button.
+  charging the screen stays awake and dims after 1 minute without a touch.
+  On first launch a step-by-step setup wizard walks through every permission
+  it needs, skipping any that are already allowed. Change it later, or re-run
+  the wizard, from the ⚙ button.
 
 ## Open when charging: how it works
 
@@ -43,10 +45,17 @@ Android 10 they can't open themselves from the background. So:
    keeps the screen on while charging, dims after 60 s idle, and closes on
    unplug. If you opened the app yourself, it stays open.
 
-The settings sheet checks each requirement and links to the matching system
-page: notifications (Android 13+), full-screen alerts (Android 14+), battery
+The setup wizard (`lib/ui/setup_wizard.dart`) and the settings sheet check
+each requirement. Only notifications can be asked for with a system pop-up;
+for the rest the app opens the matching settings page and re-checks when the
+user returns. The requirements are: notifications (Android 13+), full-screen alerts (Android 14+), battery
 optimization, and on OPPO / realme / OnePlus / Xiaomi / Vivo / Huawei phones the
 vendor **Auto-launch** setting, without which the system kills the watcher.
+The wizard opens the vendor's own auto-launch list directly where it can
+(ColorOS, MIUI, Funtouch, EMUI, ...) and falls back to App info. Android can't
+read that switch back, so the user confirms it with "I've turned it on".
+Battery optimization uses the settings list rather than the one-tap
+`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` dialog, which Google Play restricts.
 
 ### Google Play notes
 
@@ -99,7 +108,7 @@ lib/
   services/battery_service.dart    native EventChannel + demo simulator
   services/charge_analyzer.dart    unit normalization, smoothing, time to full, classification
   art/                             the three CustomPainter 3D themes + tiny 3D math
-  ui/                              charging screen, stats panel, formatting
+  ui/                              charging screen, stats panel, setup wizard, settings sheet
 android/.../MainActivity.kt        battery telemetry, lock-screen/keep-awake/dim window, settings channel
 android/.../ChargeWatcherService.kt  charger watcher + full-screen plug-in notification
 android/.../AutoLaunch.kt          on/off flag, permission checks, notification channels

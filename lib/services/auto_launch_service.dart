@@ -73,6 +73,17 @@ class AutoLaunchService {
   Future<void> openBatterySettings() => _open('openBatterySettings');
   Future<void> openAppSettings() => _open('openAppSettings');
 
+  /// Opens the phone maker's auto-launch list (OPPO, Xiaomi, vivo, ...).
+  /// Returns false when it had to fall back to the app's App info page.
+  Future<bool> openAutoLaunchSettings() async {
+    if (!isAvailable) return false;
+    try {
+      return await _channel.invokeMethod<bool>('openAutoLaunchSettings') ?? false;
+    } on MissingPluginException {
+      return false;
+    }
+  }
+
   Future<AutoLaunchStatus> _call(String method, [Object? args]) async {
     if (!isAvailable) return AutoLaunchStatus.unsupported;
     try {

@@ -3,6 +3,7 @@ package com.chargeverse.charge_verse
 import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -140,6 +141,9 @@ class MainActivity : FlutterActivity() {
                     openSettings(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri()))
                     result.success(null)
                 }
+                "openAutoLaunchSettings" -> {
+                    result.success(openVendorAutoStart())
+                }
                 else -> result.notImplemented()
             }
         }
@@ -181,6 +185,30 @@ class MainActivity : FlutterActivity() {
         } catch (e: ActivityNotFoundException) {
             startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri()))
         }
+    }
+
+    /**
+     * Opens the phone maker's own "auto-launch / autostart" list. These pages
+     * aren't part of Android, move between OS versions and are sometimes not
+     * exported, so try the known ones in turn and fall back to App info.
+     * Returns true when a vendor page opened.
+     */
+    private fun openVendorAutoStart(): Boolean {
+        for ((pkg, cls) in AUTO_START_ACTIVITIES) {
+            try {
+                startActivity(
+                    Intent().setComponent(ComponentName(pkg, cls))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+                return true
+            } catch (e: ActivityNotFoundException) {
+                // Not this vendor or OS version; try the next one.
+            } catch (e: SecurityException) {
+                // Page exists but isn't exported; try the next one.
+            }
+        }
+        openSettings(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri()))
+        return false
     }
 
     private fun handleLaunchIntent(intent: Intent?) {
@@ -337,5 +365,25 @@ class MainActivity : FlutterActivity() {
 
         // BatteryManager.BATTERY_PLUGGED_DOCK, added in API 33.
         private const val BATTERY_PLUGGED_DOCK = 8
+
+        private val AUTO_START_ACTIVITIES = listOf(
+            // OPPO / realme (ColorOS)
+            "com.coloros.safecenter" to "com.coloros.safecenter.startupapp.StartupAppListActivity",
+            "com.coloros.safecenter" to "com.coloros.safecenter.permission.startup.StartupAppListActivity",
+            "com.oppo.safe" to "com.oppo.safe.permission.startup.StartupAppListActivity",
+            "com.coloros.oppoguardelf" to "com.coloros.powermanager.fuelgaue.PowerUsageModelActivity",
+            // OnePlus
+            "com.oneplus.security" to "com.oneplus.security.chainlaunch.view.ChainLaunchAppListActivity",
+            // Xiaomi / Redmi / POCO
+            "com.miui.securitycenter" to "com.miui.permcenter.autostart.AutoStartManagementActivity",
+            // vivo / iQOO
+            "com.vivo.permissionmanager" to "com.vivo.permissionmanager.activity.BgStartUpManagerActivity",
+            "com.iqoo.secure" to "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity",
+            // Huawei / Honor
+            "com.huawei.systemmanager" to "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity",
+            "com.huawei.systemmanager" to "com.huawei.systemmanager.optimize.process.ProtectActivity",
+            // ASUS
+            "com.asus.mobilemanager" to "com.asus.mobilemanager.entry.FunctionActivity",
+        )
     }
 }
