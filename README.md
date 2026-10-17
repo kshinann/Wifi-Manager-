@@ -5,16 +5,25 @@ your phone is charging, alongside the real numbers.
 
 ## Features
 
-- **Three switchable 3D themes.** Tap the selector at the top or swipe sideways
-  across the artwork. Your choice is remembered.
-  - **Liquid Orb**: a glass sphere filling with glowing liquid. Waves, bubbles
-    and an orbiting light ring speed up with charging power, and energy streams
-    up into the orb while plugged in.
-  - **Battery Core**: a sci-fi glass battery over a scrolling neon grid, wrapped
-    in three gyroscope rings with comet trails.
-  - **Galaxy**: a tilted 3D spiral galaxy draining into a pulsing core. More
-    power means more stars and faster inflow. The outer ring shows the battery
-    level.
+- **13 switchable themes.** Scroll the theme strip at the top and tap one, or
+  swipe sideways across the artwork. Your choice is remembered. In every theme
+  the battery level is part of the scene, and charging power sets the pace.
+
+  | Theme | Battery level shows as | Faster charging means |
+  |---|---|---|
+  | Liquid Orb | liquid filling a glass sphere | bigger waves, more bubbles and energy streams |
+  | Battery Core | energy filling a glass battery | faster gyroscope rings, brighter neon grid |
+  | Galaxy | ring around the disc | more stars spiralling into the core |
+  | Ocean | the tide (horizon) rising | taller, faster waves and more sun glitter |
+  | Fish Tank | water level in the tank | more fish, swimming faster, more bubbles |
+  | Forest | night turning into sunrise | more fireflies |
+  | Aurora | taller northern-light curtains | faster rippling lights |
+  | Lava Lamp | the wax pool at the bottom | more blobs rising faster |
+  | Snow Globe | snow piling up | a faster, denser blizzard |
+  | Planet | day side growing from crescent to full | faster spin and orbiting moons |
+  | Neon City | windows lighting up | faster grid road and flying light trails |
+  | Rainy Window | condensation clearing from the bottom up | heavier rain, faster drops |
+  | Volcano | lava rivers flowing down the slopes | more, higher embers |
 - **Live stats**
   - Charge type badge: Slow / Charging / Fast / Super-fast, with watts going
     into the battery and its temperature (hot-battery warning at 42 °C)
@@ -107,7 +116,8 @@ lib/
   models/battery_reading.dart      raw sample + platform map parsing
   services/battery_service.dart    native EventChannel + demo simulator
   services/charge_analyzer.dart    unit normalization, smoothing, time to full, classification
-  art/                             the three CustomPainter 3D themes + tiny 3D math
+  art/                             Liquid Orb, Battery Core, Galaxy + shared 3D math/helpers
+  art/scenes/                      the 10 scene themes (ocean, fish tank, forest, ...)
   ui/                              charging screen, stats panel, setup wizard, settings sheet
 android/.../MainActivity.kt        battery telemetry, lock-screen/keep-awake/dim window, settings channel
 android/.../ChargeWatcherService.kt  charger watcher + full-screen plug-in notification

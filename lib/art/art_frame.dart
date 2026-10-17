@@ -133,3 +133,54 @@ void paintBackdrop(Canvas canvas, Size size, ArtFrame f, Offset glowCenter) {
     canvas.drawCircle(p, 0.6 + hash(i, 15) * 0.9, star);
   }
 }
+
+/// Fills [rect] with a top-to-bottom gradient.
+void paintVertical(Canvas canvas, Rect rect, List<Color> colors, [List<double>? stops]) {
+  canvas.drawRect(
+    rect,
+    Paint()
+      ..shader = Gradient.linear(
+        rect.topCenter,
+        rect.bottomCenter,
+        colors,
+        // dart:ui requires explicit stops for more than two colours.
+        stops ??
+            (colors.length == 2
+                ? null
+                : [for (var i = 0; i < colors.length; i++) i / (colors.length - 1)]),
+      ),
+  );
+}
+
+/// Twinkling stars in the top [maxY] fraction of the screen.
+void paintStars(
+  Canvas canvas,
+  Size size,
+  double time, {
+  int count = 90,
+  double maxY = 1,
+  double alpha = 1,
+  int salt = 0,
+}) {
+  final star = Paint();
+  for (var i = 0; i < count; i++) {
+    final p = Offset(hash(i, 31 + salt) * size.width, hash(i, 32 + salt) * size.height * maxY);
+    final tw = 0.5 + 0.5 * math.sin(time * (0.5 + hash(i, 33) * 2) + i);
+    star.color = const Color(0xFFFFFFFF)
+        .withValues(alpha: (alpha * (0.15 + 0.7 * tw * hash(i, 34))).clamp(0.0, 1.0));
+    canvas.drawCircle(p, 0.5 + hash(i, 35) * 1.2, star);
+  }
+}
+
+/// Soft radial glow.
+void paintGlow(Canvas canvas, Offset c, double radius, Color color, double alpha) {
+  canvas.drawCircle(
+    c,
+    radius,
+    Paint()
+      ..shader = Gradient.radial(c, radius, [
+        color.withValues(alpha: alpha.clamp(0.0, 1.0)),
+        color.withValues(alpha: 0),
+      ]),
+  );
+}

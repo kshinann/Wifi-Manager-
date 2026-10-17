@@ -195,7 +195,7 @@ class _ChargingScreenState extends State<ChargingScreen>
                         ? () => AutoLaunchSheet.show(context, _autoLaunch)
                         : null,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
                   _StylePicker(selected: _style, onSelected: _setStyle),
                   const Spacer(),
                   IgnorePointer(child: _LevelReadout(snapshot: s, color: cls.color)),
@@ -284,34 +284,119 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _StylePicker extends StatelessWidget {
+/// Horizontally scrolling row of theme buttons. Keeps the selected theme in
+/// view when it changes, e.g. after swiping across the artwork.
+class _StylePicker extends StatefulWidget {
   const _StylePicker({required this.selected, required this.onSelected});
 
   final ArtStyle selected;
   final ValueChanged<ArtStyle> onSelected;
 
   @override
+  State<_StylePicker> createState() => _StylePickerState();
+}
+
+class _StylePickerState extends State<_StylePicker> {
+  static const _itemWidth = 68.0;
+  static const _gap = 6.0;
+  final _controller = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reveal(animate: false));
+  }
+
+  @override
+  void didUpdateWidget(_StylePicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selected != widget.selected) _reveal(animate: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Scrolls so the selected theme sits in the middle of the strip.
+  void _reveal({required bool animate}) {
+    if (!_controller.hasClients) return;
+    final pos = _controller.position;
+    final target = (widget.selected.index * (_itemWidth + _gap) -
+            (pos.viewportDimension - _itemWidth) / 2)
+        .clamp(pos.minScrollExtent, pos.maxScrollExtent);
+    if (animate) {
+      _controller.animateTo(
+        target,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+    } else {
+      _controller.jumpTo(target);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SegmentedButton<ArtStyle>(
-      segments: [
-        for (final s in ArtStyle.values)
-          ButtonSegment(value: s, icon: Icon(s.icon, size: 18), label: Text(s.label)),
-      ],
-      selected: {selected},
-      onSelectionChanged: (set) => onSelected(set.first),
-      showSelectedIcon: false,
-      style: ButtonStyle(
-        visualDensity: VisualDensity.compact,
-        foregroundColor: const WidgetStatePropertyAll(Colors.white),
-        backgroundColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? Colors.white.withValues(alpha: 0.18)
-              : Colors.white.withValues(alpha: 0.04),
-        ),
-        side: WidgetStatePropertyAll(
-          BorderSide(color: Colors.white.withValues(alpha: 0.15)),
-        ),
-        textStyle: const WidgetStatePropertyAll(TextStyle(fontSize: 12)),
+    return SizedBox(
+      height: 74,
+      child: ListView.separated(
+        controller: _controller,
+        scrollDirection: Axis.horizontal,
+        itemCount: ArtStyle.values.length,
+        separatorBuilder: (context, index) => const SizedBox(width: _gap),
+        itemBuilder: (context, i) {
+          final style = ArtStyle.values[i];
+          final selected = style == widget.selected;
+          return Semantics(
+            selected: selected,
+            button: true,
+            label: style.label,
+            child: GestureDetector(
+              onTap: () => widget.onSelected(style),
+              child: SizedBox(
+                width: _itemWidth,
+                child: Column(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: style.tint.withValues(alpha: selected ? 0.3 : 0.1),
+                        border: Border.all(
+                          color: selected ? style.tint : Colors.white.withValues(alpha: 0.12),
+                          width: selected ? 2 : 1,
+                        ),
+                        boxShadow: selected
+                            ? [BoxShadow(color: style.tint.withValues(alpha: 0.5), blurRadius: 14)]
+                            : null,
+                      ),
+                      child: Icon(
+                        style.icon,
+                        size: 22,
+                        color: selected ? Colors.white : style.tint.withValues(alpha: 0.85),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      style.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: selected ? Colors.white : Colors.white60,
+                        fontSize: 11,
+                        fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
