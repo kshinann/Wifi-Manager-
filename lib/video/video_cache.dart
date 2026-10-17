@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -60,6 +61,7 @@ class VideoCache {
     try {
       final m = jsonDecode(meta.readAsStringSync()) as Map<String, dynamic>;
       if (m['source'] != _sourceKey(config)) return null;
+      if (config.url != null && await _replacedOnServer(config.url!, file)) return null;
       return CachedVideo(
         file: file,
         credit: m['credit'] as String?,
@@ -67,6 +69,21 @@ class VideoCache {
       );
     } catch (_) {
       return null;
+    }
+  }
+
+  /// True when the file at [url] differs from the cached copy, e.g. after a
+  /// clip was replaced under the same name in the GitHub Release. Compares
+  /// sizes with a quick HEAD request; offline or on any error the cached copy
+  /// is kept.
+  Future<bool> _replacedOnServer(String url, File file) async {
+    try {
+      final res = await _client.head(Uri.parse(url)).timeout(const Duration(seconds: 5));
+      if (res.statusCode != 200) return false;
+      final length = int.tryParse(res.headers['content-length'] ?? '');
+      return length != null && length > 0 && length != file.lengthSync();
+    } catch (_) {
+      return false;
     }
   }
 
@@ -95,7 +112,12 @@ class VideoCache {
     var received = 0;
     final sink = part.openWrite();
     try {
-      await for (final chunk in response.stream) {
+      // A download that stops receiving data for 30 s fails instead of
+      // hanging on "Downloading…" forever.
+      await for (final chunk in response.stream.timeout(
+        const Duration(seconds: 30),
+        onTimeout: (sink) => sink.addError(const VideoUnavailable('Download stalled')),
+      )) {
         sink.add(chunk);
         received += chunk.length;
         if (total > 0) onProgress?.call(received / total);

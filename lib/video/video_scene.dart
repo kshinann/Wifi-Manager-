@@ -35,6 +35,7 @@ class ArtBackground extends StatefulWidget {
 
 class _ArtBackgroundState extends State<ArtBackground> {
   VideoPlayerController? _controller;
+  File? _file;
   double? _progress;
   String? _error;
   double _speed = 1;
@@ -63,6 +64,7 @@ class _ArtBackgroundState extends State<ArtBackground> {
   }
 
   Future<void> _load() async {
+    if (mounted) setState(() => _error = null);
     try {
       var video = await widget.cache.cached(widget.style);
       if (video == null) {
@@ -77,8 +79,42 @@ class _ArtBackgroundState extends State<ArtBackground> {
       if (!mounted) return;
       await _play(video);
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
+      // Shows in the `flutter run` console, to help diagnose a scene.
+      debugPrint('ChargeVerse video [${widget.style.name}]: $e');
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _progress = null;
+        });
+      }
     }
+  }
+
+  /// Some files load but then fail to decode (e.g. 4K or 60 fps clips on
+  /// mid-range phones). Drop the file so the next try downloads it again, and
+  /// fall back to the drawn scene with a retry button.
+  void _watchForErrors() {
+    final c = _controller;
+    if (c == null || !c.value.hasError) return;
+    c.removeListener(_watchForErrors);
+    debugPrint('ChargeVerse video [${widget.style.name}] playback error: ${c.value.errorDescription}');
+    final file = _file;
+    setState(() {
+      _controller = null;
+      _error = 'Video could not be played on this phone';
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => c.dispose());
+    try {
+      file?.deleteSync();
+    } catch (_) {}
+  }
+
+  void _retry() {
+    setState(() {
+      _error = null;
+      _progress = 0;
+    });
+    _load();
   }
 
   Future<void> _play(CachedVideo video) async {
@@ -94,7 +130,7 @@ class _ArtBackgroundState extends State<ArtBackground> {
       try {
         await File(video.file.path).delete();
       } catch (_) {}
-      throw const VideoUnavailable('Video could not be played');
+      throw const VideoUnavailable('Video could not be played on this phone');
     }
     if (!mounted) {
       await c.dispose();
@@ -105,8 +141,10 @@ class _ArtBackgroundState extends State<ArtBackground> {
     await c.play();
     setState(() {
       _controller = c;
+      _file = video.file;
       _progress = null;
     });
+    c.addListener(_watchForErrors);
     _syncSpeed();
     final credit = video.credit;
     final id = video.pexelsId;
@@ -149,6 +187,7 @@ class _ArtBackgroundState extends State<ArtBackground> {
           Align(
             alignment: const Alignment(0, -0.45),
             child: _StatusChip(
+              onRetry: _error != null ? _retry : null,
               text: _error != null
                   ? '$_error — showing drawn scene'
                   : 'Downloading ${widget.style.label} video… ${((_progress ?? 0) * 100).round()}%',
@@ -161,10 +200,11 @@ class _ArtBackgroundState extends State<ArtBackground> {
 }
 
 class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.text, this.progress});
+  const _StatusChip({required this.text, this.progress, this.onRetry});
 
   final String text;
   final double? progress;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -187,6 +227,12 @@ class _StatusChip extends StatelessWidget {
             const SizedBox(height: 8),
             SizedBox(width: 160, child: LinearProgressIndicator(value: progress)),
           ],
+          if (onRetry != null)
+            TextButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Try again'),
+            ),
         ],
       ),
     );
