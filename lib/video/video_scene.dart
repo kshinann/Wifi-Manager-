@@ -109,8 +109,10 @@ class _ArtBackgroundState extends State<ArtBackground> {
     });
     _syncSpeed();
     final credit = video.credit;
-    widget.credit.value =
-        credit == null ? null : (style: widget.style, text: '$credit · #${video.pexelsId ?? '-'}');
+    final id = video.pexelsId;
+    widget.credit.value = credit == null
+        ? null
+        : (style: widget.style, text: id == null ? credit : '$credit · #$id');
   }
 
   /// Playback speed follows charging power: 0.6x when idle up to 1.5x at

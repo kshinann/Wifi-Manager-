@@ -26,7 +26,7 @@ your phone is charging, alongside the real numbers.
   | Volcano | lava rivers flowing down the slopes | more, higher embers |
 - **Real video for the 10 scene themes.** Ocean, Fish Tank, Forest, Aurora, Lava
   Lamp, Snow Globe, Planet, Neon City, Rainy Window and Volcano play real
-  stock footage from Pexels. The video plays faster with more charging power
+  footage hosted on this repo's GitHub Releases. The video plays faster with more charging power
   (0.6x to 1.5x), a soft glow rises from the bottom to the battery level, and
   energy motes float up while charging. Liquid Orb, Battery Core and Galaxy
   stay as drawn 3D art. See [Scene videos](#scene-videos).
@@ -89,18 +89,28 @@ Each video theme downloads its clip the first time it's chosen (with a
 progress chip), stores it in app storage and plays it offline from then on.
 Until the clip is ready, or if it can't download, the drawn version shows.
 
-1. Get a free API key at https://www.pexels.com/api/.
-2. Run with it: `flutter run --dart-define=PEXELS_API_KEY=your_key`
-   (also pass it to `flutter build appbundle` for release).
-3. The app searches Pexels for each scene (queries in
-   `lib/video/scene_videos.dart`) and picks the best portrait MP4 near
-   720×1280. The credit line under the theme strip shows the videographer and
-   the clip's Pexels ID.
-4. Happy with a clip? Pin it with `pexelsId:` so every user gets the same
-   one. Not happy? Change the `query`, then clear app data to re-download.
-5. For a big Play release, host the 10 MP4s yourself (e.g. GitHub Releases)
-   and set `url:` per scene. Then no API key ships in the app and you avoid
-   Pexels' API rate limits. Keep the "Video by … on Pexels" credit either way.
+The clips are files in the GitHub Release `scene-videos-v1` of this repo
+(see `lib/video/scene_videos.dart`), so no API key ships in the app:
+
+| Scene | File name |
+|---|---|
+| Ocean | `ocean.mp4` |
+| Fish Tank | `fish_tank.mp4` |
+| Forest | `forest.mp4` |
+| Aurora | `aurora.mp4` |
+| Lava Lamp | `lava_lamp.mp4` |
+| Snow Globe | `snow_globe.mp4` |
+| Planet | `planet.mp4` |
+| Neon City | `neon_city.mp4` |
+| Rainy Window | `rainy_window.mp4` |
+| Volcano | `volcano.mp4` |
+
+Pick portrait (vertical) clips around 720×1280 or 1080×1920, ideally under
+10 MB and 10–30 s long; they loop. Free sources such as pexels.com allow use
+inside apps. To swap a clip later, upload it to a new release
+(`scene-videos-v2`) and update the tag in `scene_videos.dart`; phones notice
+the new URL and download it. A scene can also use `credit:` to show the
+videographer's name.
 
 ## Platform support
 

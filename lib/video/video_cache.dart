@@ -42,22 +42,32 @@ class VideoCache {
     return dir;
   }
 
-  /// The cached video, or null if it hasn't been downloaded yet.
+  /// Identifies where a scene's video comes from. When the config changes
+  /// (new URL, pinned ID or query), the cached file no longer matches and the
+  /// new clip is downloaded.
+  static String _sourceKey(SceneVideo config) =>
+      config.url ?? (config.pexelsId != null ? 'pexels:${config.pexelsId}' : 'query:${config.query}');
+
+  /// The cached video, or null if it hasn't been downloaded yet or is out of
+  /// date.
   Future<CachedVideo?> cached(ArtStyle style) async {
+    final config = sceneVideos[style];
+    if (config == null) return null;
     final dir = await _dir();
     final file = File('${dir.path}/${style.name}.mp4');
-    if (!file.existsSync()) return null;
-    String? credit;
-    int? id;
     final meta = File('${dir.path}/${style.name}.json');
-    if (meta.existsSync()) {
-      try {
-        final m = jsonDecode(meta.readAsStringSync()) as Map<String, dynamic>;
-        credit = m['credit'] as String?;
-        id = m['pexelsId'] as int?;
-      } catch (_) {}
+    if (!file.existsSync() || !meta.existsSync()) return null;
+    try {
+      final m = jsonDecode(meta.readAsStringSync()) as Map<String, dynamic>;
+      if (m['source'] != _sourceKey(config)) return null;
+      return CachedVideo(
+        file: file,
+        credit: m['credit'] as String?,
+        pexelsId: m['pexelsId'] as int?,
+      );
+    } catch (_) {
+      return null;
     }
-    return CachedVideo(file: file, credit: credit, pexelsId: id);
   }
 
   /// Downloads the scene's video, reporting progress from 0 to 1. Concurrent
@@ -75,6 +85,9 @@ class VideoCache {
     final target = File('${dir.path}/${style.name}.mp4');
 
     final response = await _client.send(http.Request('GET', Uri.parse(source.link)));
+    if (response.statusCode == 404) {
+      throw const VideoUnavailable('Video not uploaded yet');
+    }
     if (response.statusCode != 200) {
       throw VideoUnavailable('Download failed (${response.statusCode})');
     }
@@ -94,6 +107,7 @@ class VideoCache {
     await part.rename(target.path);
 
     await File('${dir.path}/${style.name}.json').writeAsString(jsonEncode({
+      'source': _sourceKey(config),
       'credit': source.credit,
       'pexelsId': source.pexelsId,
     }));
@@ -102,9 +116,9 @@ class VideoCache {
 
   Future<({String link, String? credit, int? pexelsId})> _resolve(SceneVideo config) async {
     final url = config.url;
-    if (url != null) return (link: url, credit: null, pexelsId: null);
+    if (url != null) return (link: url, credit: config.credit, pexelsId: null);
     if (pexelsApiKey.isEmpty) {
-      throw const VideoUnavailable('Add a Pexels API key to download videos');
+      throw const VideoUnavailable('No video set for this scene');
     }
 
     final Map<String, dynamic> video;
