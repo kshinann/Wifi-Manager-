@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Downloads scene videos the first time a video theme is chosen. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <!-- Auto-open when charging: a user-enabled foreground service watches for
          the charger and posts a full-screen notification that opens the
          charging screen over the lock screen. -->

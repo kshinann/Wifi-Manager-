@@ -10,6 +10,9 @@ dependencies:
   flutter:
     sdk: flutter
   shared_preferences: ^2.3.0
+  video_player: ^2.9.0
+  path_provider: ^2.1.0
+  http: ^1.2.0
 
 dev_dependencies:
   flutter_test:

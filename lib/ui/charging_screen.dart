@@ -13,6 +13,8 @@ import '../models/battery_reading.dart';
 import '../services/auto_launch_service.dart';
 import '../services/battery_service.dart';
 import '../services/charge_analyzer.dart';
+import '../video/video_cache.dart';
+import '../video/video_scene.dart';
 import 'auto_launch_sheet.dart';
 import 'formatting.dart';
 import 'setup_wizard.dart';
@@ -32,6 +34,8 @@ class _ChargingScreenState extends State<ChargingScreen>
 
   final _analyzer = ChargeAnalyzer();
   final _autoLaunch = AutoLaunchService();
+  final _videoCache = VideoCache();
+  final _credit = ValueNotifier<SceneCredit?>(null);
   final _frame = ValueNotifier(ArtFrame.initial);
   late final Ticker _ticker;
   StreamSubscription<BatteryReading>? _sub;
@@ -63,6 +67,7 @@ class _ChargingScreenState extends State<ChargingScreen>
     _ticker.dispose();
     _sub?.cancel();
     _frame.dispose();
+    _credit.dispose();
     super.dispose();
   }
 
@@ -173,10 +178,12 @@ class _ChargingScreenState extends State<ChargingScreen>
               child: RepaintBoundary(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 450),
-                  child: CustomPaint(
+                  child: ArtBackground(
                     key: ValueKey(_style),
-                    painter: _style.painter(_frame),
-                    size: Size.infinite,
+                    style: _style,
+                    frame: _frame,
+                    cache: _videoCache,
+                    credit: _credit,
                   ),
                 ),
               ),
@@ -197,6 +204,22 @@ class _ChargingScreenState extends State<ChargingScreen>
                   ),
                   const SizedBox(height: 6),
                   _StylePicker(selected: _style, onSelected: _setStyle),
+                  // Pexels asks for the videographer to be credited.
+                  ValueListenableBuilder<SceneCredit?>(
+                    valueListenable: _credit,
+                    builder: (context, credit, _) => credit == null || credit.style != _style
+                        ? const SizedBox.shrink()
+                        : Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              credit.text,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.55),
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                  ),
                   const Spacer(),
                   IgnorePointer(child: _LevelReadout(snapshot: s, color: cls.color)),
                   const SizedBox(height: 14),

@@ -24,6 +24,12 @@ your phone is charging, alongside the real numbers.
   | Neon City | windows lighting up | faster grid road and flying light trails |
   | Rainy Window | condensation clearing from the bottom up | heavier rain, faster drops |
   | Volcano | lava rivers flowing down the slopes | more, higher embers |
+- **Real video for the 10 scene themes.** Ocean, Fish Tank, Forest, Aurora, Lava
+  Lamp, Snow Globe, Planet, Neon City, Rainy Window and Volcano play real
+  stock footage from Pexels. The video plays faster with more charging power
+  (0.6x to 1.5x), a soft glow rises from the bottom to the battery level, and
+  energy motes float up while charging. Liquid Orb, Battery Core and Galaxy
+  stay as drawn 3D art. See [Scene videos](#scene-videos).
 - **Live stats**
   - Charge type badge: Slow / Charging / Fast / Super-fast, with watts going
     into the battery and its temperature (hot-battery warning at 42 °C)
@@ -77,6 +83,25 @@ Battery optimization uses the settings list rather than the one-tap
 - The feature is off until the user opts in, and the persistent notification
   explains why the app is running.
 
+## Scene videos
+
+Each video theme downloads its clip the first time it's chosen (with a
+progress chip), stores it in app storage and plays it offline from then on.
+Until the clip is ready, or if it can't download, the drawn version shows.
+
+1. Get a free API key at https://www.pexels.com/api/.
+2. Run with it: `flutter run --dart-define=PEXELS_API_KEY=your_key`
+   (also pass it to `flutter build appbundle` for release).
+3. The app searches Pexels for each scene (queries in
+   `lib/video/scene_videos.dart`) and picks the best portrait MP4 near
+   720×1280. The credit line under the theme strip shows the videographer and
+   the clip's Pexels ID.
+4. Happy with a clip? Pin it with `pexelsId:` so every user gets the same
+   one. Not happy? Change the `query`, then clear app data to re-download.
+5. For a big Play release, host the 10 MP4s yourself (e.g. GitHub Releases)
+   and set `url:` per scene. Then no API key ships in the app and you avoid
+   Pexels' API rate limits. Keep the "Video by … on Pexels" credit either way.
+
 ## Platform support
 
 | | Android | iOS |
@@ -117,7 +142,8 @@ lib/
   services/battery_service.dart    native EventChannel + demo simulator
   services/charge_analyzer.dart    unit normalization, smoothing, time to full, classification
   art/                             Liquid Orb, Battery Core, Galaxy + shared 3D math/helpers
-  art/scenes/                      the 10 scene themes (ocean, fish tank, forest, ...)
+  art/scenes/                      drawn versions of the 10 scenes (shown until the video is ready)
+  video/                           scene video config, download cache, video player + charging overlay
   ui/                              charging screen, stats panel, setup wizard, settings sheet
 android/.../MainActivity.kt        battery telemetry, lock-screen/keep-awake/dim window, settings channel
 android/.../ChargeWatcherService.kt  charger watcher + full-screen plug-in notification
