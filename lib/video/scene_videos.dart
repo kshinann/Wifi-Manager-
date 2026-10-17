@@ -15,10 +15,12 @@ class SceneVideo {
   final String? credit;
 }
 
-/// The videos are assets of this GitHub Release. To change a scene's clip,
-/// upload a new file under the same name to a new release and bump the tag:
-/// the URL changes, so phones download the new clip instead of the cached one.
-const _release = 'https://github.com/kshinann/Wifi-Manager-/releases/download/scene-videos-v1';
+/// The videos are assets of this GitHub Release. Every clip is encoded the
+/// same way so any Android phone can play it: 720x1280 portrait, H.264 Main
+/// profile, 30 fps, no audio, at most 20 s (tool/encode_scene_video.sh).
+/// To change a clip, upload it under the same name to a new release and bump
+/// the tag here.
+const _release = 'https://github.com/kshinann/Wifi-Manager-/releases/download/scene-videos-v2';
 
 const sceneVideos = <ArtStyle, SceneVideo>{
   ArtStyle.ocean: SceneVideo(query: 'ocean waves sunset', url: '$_release/ocean.mp4'),

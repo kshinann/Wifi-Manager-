@@ -89,7 +89,7 @@ Each video theme downloads its clip the first time it's chosen (with a
 progress chip), stores it in app storage and plays it offline from then on.
 Until the clip is ready, or if it can't download, the drawn version shows.
 
-The clips are files in the GitHub Release `scene-videos-v1` of this repo
+The clips are files in the GitHub Release `scene-videos-v2` of this repo
 (see `lib/video/scene_videos.dart`), so no API key ships in the app:
 
 | Scene | File name |
@@ -105,12 +105,20 @@ The clips are files in the GitHub Release `scene-videos-v1` of this repo
 | Rainy Window | `rainy_window.mp4` |
 | Volcano | `volcano.mp4` |
 
-Pick portrait (vertical) clips around 720×1280 or 1080×1920, ideally under
-10 MB and 10–30 s long; they loop. Free sources such as pexels.com allow use
-inside apps. To swap a clip later, upload it to a new release
-(`scene-videos-v2`) and update the tag in `scene_videos.dart`; phones notice
-the new URL and download it. A scene can also use `credit:` to show the
-videographer's name.
+Every clip must be encoded the same way, or mid-range phones fail to play
+it (4K and 60 fps clips were the cause of "Video could not be played"):
+**720×1280 portrait, H.264 Main profile, 30 fps, no audio, at most 20 s**,
+usually 1–6 MB. Convert any source clip with:
+
+```bash
+tool/encode_scene_video.sh input.mp4 ocean.mp4          # fill the screen (crop)
+tool/encode_scene_video.sh input.mp4 volcano.mp4 --fit  # keep the whole frame, blurred fill
+```
+
+Use `--fit` for low-resolution or landscape clips you don't want cropped. To
+swap a clip later, upload it to a new release (`scene-videos-v3`) and update
+the tag in `lib/video/scene_videos.dart`. A scene can also use `credit:` to
+show the videographer's name.
 
 ## Platform support
 

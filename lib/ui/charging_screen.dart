@@ -41,6 +41,9 @@ class _ChargingScreenState extends State<ChargingScreen>
   StreamSubscription<BatteryReading>? _sub;
 
   ArtStyle _style = ArtStyle.liquidOrb;
+
+  /// Lets the outgoing scene stop its video as soon as another is chosen.
+  final _currentStyle = ValueNotifier(ArtStyle.liquidOrb);
   ChargeSnapshot? _snapshot;
   bool _demo = false;
   bool _liveUnavailable = false;
@@ -68,6 +71,7 @@ class _ChargingScreenState extends State<ChargingScreen>
     _sub?.cancel();
     _frame.dispose();
     _credit.dispose();
+    _currentStyle.dispose();
     super.dispose();
   }
 
@@ -75,7 +79,7 @@ class _ChargingScreenState extends State<ChargingScreen>
     try {
       final prefs = await SharedPreferences.getInstance();
       if (!mounted) return;
-      setState(() => _style = ArtStyle.fromName(prefs.getString(_styleKey)));
+      setState(() => _style = _currentStyle.value = ArtStyle.fromName(prefs.getString(_styleKey)));
     } catch (_) {
       // Preferences are a convenience; keep the default style.
     }
@@ -99,7 +103,7 @@ class _ChargingScreenState extends State<ChargingScreen>
 
   Future<void> _setStyle(ArtStyle style) async {
     HapticFeedback.selectionClick();
-    setState(() => _style = style);
+    setState(() => _style = _currentStyle.value = style);
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_styleKey, style.name);
@@ -184,6 +188,7 @@ class _ChargingScreenState extends State<ChargingScreen>
                     frame: _frame,
                     cache: _videoCache,
                     credit: _credit,
+                    current: _currentStyle,
                   ),
                 ),
               ),

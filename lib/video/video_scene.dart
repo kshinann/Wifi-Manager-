@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -22,12 +23,18 @@ class ArtBackground extends StatefulWidget {
     required this.frame,
     required this.cache,
     required this.credit,
+    required this.current,
   });
 
   final ArtStyle style;
   final ValueNotifier<ArtFrame> frame;
   final VideoCache cache;
   final ValueNotifier<SceneCredit?> credit;
+
+  /// The theme currently selected. While this scene fades out after another
+  /// is picked, its video is stopped right away: mid-range phones have few
+  /// hardware decoders, and two videos at once can make the new one fail.
+  final ValueListenable<ArtStyle> current;
 
   @override
   State<ArtBackground> createState() => _ArtBackgroundState();
@@ -49,15 +56,19 @@ class _ArtBackgroundState extends State<ArtBackground> {
     super.initState();
     _lifecycle = AppLifecycleListener(
       onHide: () => _controller?.pause(),
-      onShow: () => _controller?.play(),
+      onShow: () {
+        if (_isCurrent) _controller?.play();
+      },
     );
     widget.frame.addListener(_syncSpeed);
+    widget.current.addListener(_onSelectionChanged);
     if (_isVideo) _load();
   }
 
   @override
   void dispose() {
     widget.frame.removeListener(_syncSpeed);
+    widget.current.removeListener(_onSelectionChanged);
     _lifecycle.dispose();
     _controller?.dispose();
     super.dispose();
@@ -109,6 +120,17 @@ class _ArtBackgroundState extends State<ArtBackground> {
     } catch (_) {}
   }
 
+  bool get _isCurrent => widget.current.value == widget.style;
+
+  void _onSelectionChanged() {
+    if (_isCurrent) return;
+    final c = _controller;
+    if (c == null) return;
+    c.removeListener(_watchForErrors);
+    setState(() => _controller = null);
+    WidgetsBinding.instance.addPostFrameCallback((_) => c.dispose());
+  }
+
   void _retry() {
     setState(() {
       _error = null;
@@ -132,7 +154,7 @@ class _ArtBackgroundState extends State<ArtBackground> {
       } catch (_) {}
       throw const VideoUnavailable('Video could not be played on this phone');
     }
-    if (!mounted) {
+    if (!mounted || !_isCurrent) {
       await c.dispose();
       return;
     }
