@@ -40,10 +40,10 @@ class _ChargingScreenState extends State<ChargingScreen>
   late final Ticker _ticker;
   StreamSubscription<BatteryReading>? _sub;
 
-  ArtStyle _style = ArtStyle.liquidOrb;
+  ArtStyle _style = ArtStyle.lightning;
 
   /// Lets the outgoing scene stop its video as soon as another is chosen.
-  final _currentStyle = ValueNotifier(ArtStyle.liquidOrb);
+  final _currentStyle = ValueNotifier(ArtStyle.lightning);
   ChargeSnapshot? _snapshot;
   bool _demo = false;
   bool _liveUnavailable = false;
@@ -55,6 +55,16 @@ class _ChargingScreenState extends State<ChargingScreen>
   double _level = 0;
   double _intensity = 0;
   Color _accent = ArtFrame.initial.accent;
+  double _power = 0;
+  double _now = 0;
+
+  // Plug-in burst: starts when charging begins (or on double-tap).
+  double? _burstAt;
+  bool _wasCharging = false;
+
+  // Power scenes keep the screen clean; a tap shows the stats for a while.
+  bool _showDetails = false;
+  Timer? _detailsTimer;
 
   @override
   void initState() {
@@ -68,6 +78,7 @@ class _ChargingScreenState extends State<ChargingScreen>
   @override
   void dispose() {
     _ticker.dispose();
+    _detailsTimer?.cancel();
     _sub?.cancel();
     _frame.dispose();
     _credit.dispose();
@@ -151,15 +162,51 @@ class _ChargingScreenState extends State<ChargingScreen>
     _intensity += ((s?.intensity ?? 0.2) - _intensity) * ease;
     _accent = Color.lerp(_accent, cls.color, ease)!;
     _phase += dt * (0.25 + _intensity * 2.4);
+    _power += (_tierFor(cls) - _power) * (1 - math.exp(-dt * 2));
+    _now = elapsed.inMicroseconds / 1e6;
+
+    final charging = s?.reading.isCharging ?? false;
+    if (charging && !_wasCharging) _ignite();
+    _wasCharging = charging;
+    final burstAt = _burstAt;
+    final burst = burstAt == null ? 0.0 : (1 - (_now - burstAt) / 1.8).clamp(0.0, 1.0);
 
     _frame.value = ArtFrame(
-      time: elapsed.inMicroseconds / 1e6,
+      time: _now,
       phase: _phase,
       level: _level,
       intensity: _intensity,
-      charging: s?.reading.isCharging ?? false,
+      charging: charging,
       accent: _accent,
+      power: _power,
+      burst: burst,
     );
+  }
+
+  /// Charging tier for the power scenes: 0 off … 4 super-fast.
+  static double _tierFor(ChargeClass cls) => switch (cls) {
+        ChargeClass.notCharging => 0,
+        ChargeClass.full => 0.6,
+        ChargeClass.measuring => 1.5,
+        ChargeClass.slow => 1,
+        ChargeClass.normal => 2,
+        ChargeClass.fast => 3,
+        ChargeClass.superFast => 4,
+      };
+
+  void _ignite() {
+    _burstAt = _now;
+    if (_style.isPower) HapticFeedback.heavyImpact();
+  }
+
+  void _toggleDetails() {
+    _detailsTimer?.cancel();
+    setState(() => _showDetails = !_showDetails);
+    if (_showDetails) {
+      _detailsTimer = Timer(const Duration(seconds: 8), () {
+        if (mounted) setState(() => _showDetails = false);
+      });
+    }
   }
 
   @override
@@ -174,6 +221,8 @@ class _ChargingScreenState extends State<ChargingScreen>
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
+              onTap: _style.isPower ? _toggleDetails : null,
+              onDoubleTap: _style.isPower ? _ignite : null,
               onHorizontalDragEnd: (d) {
                 final v = d.primaryVelocity ?? 0;
                 if (v.abs() < 200) return;
@@ -226,8 +275,13 @@ class _ChargingScreenState extends State<ChargingScreen>
                           ),
                   ),
                   const Spacer(),
-                  IgnorePointer(child: _LevelReadout(snapshot: s, color: cls.color)),
-                  const SizedBox(height: 14),
+                  if (_style.isPower) ...[
+                    IgnorePointer(child: _PowerReadout(snapshot: s, color: cls.color)),
+                    const Spacer(),
+                  ] else ...[
+                    IgnorePointer(child: _LevelReadout(snapshot: s, color: cls.color)),
+                    const SizedBox(height: 14),
+                  ],
                   if (_demo) ...[
                     _DemoSlider(
                       watts: _demoWatts,
@@ -235,7 +289,34 @@ class _ChargingScreenState extends State<ChargingScreen>
                     ),
                     const SizedBox(height: 10),
                   ],
-                  StatsPanel(snapshot: s),
+                  if (!_style.isPower)
+                    StatsPanel(snapshot: s)
+                  else
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      transitionBuilder: (child, anim) => SizeTransition(
+                        sizeFactor: anim,
+                        axisAlignment: 1,
+                        child: FadeTransition(opacity: anim, child: child),
+                      ),
+                      child: _showDetails
+                          ? GestureDetector(
+                              key: const ValueKey('details'),
+                              onTap: _toggleDetails,
+                              child: StatsPanel(snapshot: s),
+                            )
+                          : Padding(
+                              key: const ValueKey('hint'),
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                'Tap for details · double-tap to ignite',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.4),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                    ),
                 ],
               ),
             ),
@@ -460,6 +541,100 @@ class _LevelReadout extends StatelessWidget {
           style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 15),
         ),
       ],
+    );
+  }
+}
+
+/// Minimal readout for power scenes: big percentage, speed and source, and
+/// time to full. Everything else is one tap away.
+class _PowerReadout extends StatelessWidget {
+  const _PowerReadout({required this.snapshot, required this.color});
+
+  final ChargeSnapshot? snapshot;
+  final Color color;
+
+  static String? _source(PlugType p) => switch (p) {
+        PlugType.ac => 'Wall charger',
+        PlugType.usb => 'USB',
+        PlugType.wireless => 'Wireless',
+        PlugType.dock => 'Dock',
+        _ => null,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final s = snapshot;
+    if (s == null) {
+      return const Text('Connecting…', style: TextStyle(color: Colors.white70));
+    }
+    final cls = s.chargeClass;
+    final speed = s.watts != null
+        ? '${cls.label} · ${s.watts!.toStringAsFixed(1)} W'
+        : cls.label;
+    final source = s.reading.isCharging ? _source(s.reading.plug) : null;
+    final ttf = s.timeToFull;
+    const shadow = [Shadow(color: Colors.black54, blurRadius: 12)];
+
+    return Column(
+      children: [
+        Text(
+          '${s.level.round()}%',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 88,
+            fontWeight: FontWeight.w900,
+            height: 1,
+            shadows: [Shadow(color: color, blurRadius: 32), ...shadow],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(cls.icon, color: color, size: 20, shadows: shadow),
+            const SizedBox(width: 6),
+            Text(
+              speed,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                shadows: shadow,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          alignment: WrapAlignment.center,
+          children: [
+            if (source != null) _Pill(text: source, color: color),
+            if (ttf != null && ttf > Duration.zero) _Pill(text: 'Full in ${formatDuration(ttf)}', color: color),
+            if (s.reading.source == BatterySource.demo) _Pill(text: 'Simulated', color: Colors.white54),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _Pill extends StatelessWidget {
+  const _Pill({required this.text, required this.color});
+
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.6)),
+      ),
+      child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 12)),
     );
   }
 }

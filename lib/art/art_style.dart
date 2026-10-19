@@ -4,6 +4,10 @@ import 'art_frame.dart';
 import 'battery_core_painter.dart';
 import 'liquid_orb_painter.dart';
 import 'particle_galaxy_painter.dart';
+import 'power/aura_painter.dart';
+import 'power/fire_painter.dart';
+import 'power/lightning_painter.dart';
+import 'power/water_vortex_painter.dart';
 import 'scenes/aurora_painter.dart';
 import 'scenes/fish_tank_painter.dart';
 import 'scenes/forest_painter.dart';
@@ -16,6 +20,10 @@ import 'scenes/snow_globe_painter.dart';
 import 'scenes/volcano_painter.dart';
 
 enum ArtStyle {
+  lightning('Lightning', Icons.flash_on, Color(0xFF7FA8FF)),
+  inferno('Inferno', Icons.local_fire_department, Color(0xFFFF6A1A)),
+  vortex('Vortex', Icons.cyclone, Color(0xFF3FD0E8)),
+  aura('Power Aura', Icons.flare, Color(0xFFFFD34D)),
   liquidOrb('Liquid Orb', Icons.bubble_chart, Color(0xFF34E7FF)),
   batteryCore('Battery Core', Icons.battery_charging_full, Color(0xFF3DFF8A)),
   particleGalaxy('Galaxy', Icons.blur_on, Color(0xFFD45CFF)),
@@ -38,7 +46,15 @@ enum ArtStyle {
   /// Colour for this theme's button in the picker.
   final Color tint;
 
+  /// Power scenes: bold effects with a different look per charging speed,
+  /// a plug-in burst and minimal on-screen info (tap for full stats).
+  bool get isPower => index <= ArtStyle.aura.index;
+
   CustomPainter painter(ValueNotifier<ArtFrame> frame) => switch (this) {
+        ArtStyle.lightning => LightningPainter(frame),
+        ArtStyle.inferno => FirePainter(frame),
+        ArtStyle.vortex => WaterVortexPainter(frame),
+        ArtStyle.aura => AuraPainter(frame),
         ArtStyle.liquidOrb => LiquidOrbPainter(frame),
         ArtStyle.batteryCore => BatteryCorePainter(frame),
         ArtStyle.particleGalaxy => ParticleGalaxyPainter(frame),
@@ -60,5 +76,5 @@ enum ArtStyle {
       ArtStyle.values[(index - 1 + ArtStyle.values.length) % ArtStyle.values.length];
 
   static ArtStyle fromName(String? name) =>
-      ArtStyle.values.firstWhere((s) => s.name == name, orElse: () => ArtStyle.liquidOrb);
+      ArtStyle.values.firstWhere((s) => s.name == name, orElse: () => ArtStyle.lightning);
 }

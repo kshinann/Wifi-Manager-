@@ -5,7 +5,18 @@ your phone is charging, alongside the real numbers.
 
 ## Features
 
-- **13 switchable themes.** Scroll the theme strip at the top and tap one, or
+- **4 power scenes** (Lightning, Inferno, Vortex, Power Aura): bold live-drawn
+  effects with a distinct look for each charging speed, a burst when you plug
+  in (double-tap to replay), and minimal on-screen info: battery %, speed and
+  watts, charger type and time to full. Tap for the full stats.
+
+  | Scene | Slow | Normal | Fast | Super-fast |
+  |---|---|---|---|---|
+  | Lightning | sparks crawl over the core | occasional strikes | frequent branching bolts | lightning storm with sky flashes |
+  | Inferno | low flame, few embers | steady campfire | roaring blaze, spark showers | blue-white inferno |
+  | Vortex | calm ripples | water starts turning | spinning whirlpool | raging vortex with spray |
+  | Power Aura | soft blue glow | cyan aura | violet aura, shockwaves | golden aura with lightning |
+- **13 more themes.** Scroll the theme strip at the top and tap one, or
   swipe sideways across the artwork. Your choice is remembered. In every theme
   the battery level is part of the scene, and charging power sets the pace.
 

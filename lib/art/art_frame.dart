@@ -10,6 +10,8 @@ class ArtFrame {
     required this.intensity,
     required this.charging,
     required this.accent,
+    this.power = 0,
+    this.burst = 0,
   });
 
   /// Wall-clock seconds since the screen opened.
@@ -26,6 +28,15 @@ class ArtFrame {
   final double intensity;
   final bool charging;
   final Color accent;
+
+  /// Charging tier eased smoothly between whole steps: 0 not charging,
+  /// 1 slow, 2 normal, 3 fast, 4 super-fast. Power scenes switch their look
+  /// at each step and blend in between.
+  final double power;
+
+  /// 1 the moment the charger is plugged in, fading to 0 over ~2 s. Power
+  /// scenes play their "ignite" effect while it is above 0.
+  final double burst;
 
   static const initial = ArtFrame(
     time: 0,
@@ -183,4 +194,70 @@ void paintGlow(Canvas canvas, Offset c, double radius, Color color, double alpha
         color.withValues(alpha: 0),
       ]),
   );
+}
+
+/// A jagged lightning-style polyline from [a] to [b] by midpoint
+/// displacement. The same [seed] always gives the same shape, so a bolt keeps
+/// its shape for as long as it is visible.
+List<Offset> jaggedLine(Offset a, Offset b, int seed, {int depth = 5, double rough = 0.28}) {
+  var pts = [a, b];
+  var r = rough;
+  for (var d = 0; d < depth; d++) {
+    final next = <Offset>[pts.first];
+    for (var i = 0; i < pts.length - 1; i++) {
+      final p = pts[i], q = pts[i + 1];
+      final seg = q - p;
+      final normal = Offset(-seg.dy, seg.dx);
+      final shift = (hash(seed * 131 + d * 17 + i, 77) * 2 - 1) * r;
+      next
+        ..add(Offset.lerp(p, q, 0.5)! + normal * shift)
+        ..add(q);
+    }
+    pts = next;
+    r *= 0.55;
+  }
+  return pts;
+}
+
+/// Draws [points] as a glowing electric stroke: a wide blurred halo, a
+/// coloured body and a thin white-hot core.
+void paintBolt(Canvas canvas, List<Offset> points, Color color, double width, double alpha) {
+  if (points.length < 2 || alpha <= 0) return;
+  final path = Path()..moveTo(points.first.dx, points.first.dy);
+  for (final p in points.skip(1)) {
+    path.lineTo(p.dx, p.dy);
+  }
+  final paint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round
+    ..blendMode = BlendMode.plus;
+  final a = alpha.clamp(0.0, 1.0);
+  canvas.drawPath(
+    path,
+    paint
+      ..strokeWidth = width * 4
+      ..color = color.withValues(alpha: 0.35 * a)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, width * 2.5),
+  );
+  canvas.drawPath(
+    path,
+    paint
+      ..strokeWidth = width * 1.6
+      ..color = color.withValues(alpha: 0.9 * a)
+      ..maskFilter = null,
+  );
+  canvas.drawPath(
+    path,
+    paint
+      ..strokeWidth = width * 0.6
+      ..color = const Color(0xFFFFFFFF).withValues(alpha: a),
+  );
+}
+
+/// Picks a colour along [stops] for a continuous [power] value 0–4.
+Color tierColor(double power, List<Color> stops) {
+  final t = power.clamp(0.0, stops.length - 1.0);
+  final i = t.floor().clamp(0, stops.length - 2);
+  return Color.lerp(stops[i], stops[i + 1], t - i)!;
 }
