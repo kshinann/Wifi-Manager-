@@ -6,7 +6,8 @@
     "outDir": ".test-build",
     "rootDir": ".",
     "types": ["node"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "esModuleInterop": true
   },
   "include": ["src/game/**/*.ts", "src/data/**/*.ts", "tests/**/*.ts"]
 }
