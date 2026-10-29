@@ -41,8 +41,9 @@
    matches TCP connections (and the Windows DNS cache) against catalog domains. Network hits that come from a
    browser with a live extension are skipped to avoid double counting.
 6. **Upload.** Events go into a local SQLite outbox and are sent in batches of up to 200 to `POST /api/agent/events`.
-   Each event has a client-generated ID, so retries are deduplicated. The server drops `prompt_text` unless the
-   device's current policy enables recording.
+   Each event has a client-generated ID, so retries are deduplicated. The agent masks sensitive values in
+   `prompt_text` before queuing it, the server drops `prompt_text` unless the device's current policy enables
+   recording, and the server stores it encrypted (AES-256-GCM, key from `PROMPT_ENCRYPTION_KEY`).
 7. **Retention.** A background job on the server clears prompt text after the policy's retention period and deletes
    events older than the tenant's `event_retention_days`.
 

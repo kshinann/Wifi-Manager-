@@ -12,7 +12,7 @@ os.environ["AIGUARD_DATA_DIR"] = TMP
 
 from aiguard_agent.catalog import ToolMatcher  # noqa: E402
 from aiguard_agent.config import AgentConfig  # noqa: E402
-from aiguard_agent.dlp import scan  # noqa: E402
+from aiguard_agent.dlp import describe, mask, scan  # noqa: E402
 from aiguard_agent.enforcement import BEGIN, END, render_hosts  # noqa: E402
 from aiguard_agent.local_api import origin_allowed, serve  # noqa: E402
 from aiguard_agent.policy import decide, within_schedule  # noqa: E402
@@ -83,6 +83,28 @@ class DlpTests(unittest.TestCase):
         for text in ["how do I reset my password?", "password policy best practices", "passport renewal",
                      "change password every 90 days", "pass the salt"]:
             self.assertEqual(scan(text, ["credentials"], []), [], text)
+
+    def test_bank_and_phone(self):
+        for text in ["Maybank acc no: 5140 1234 5678", "transfer to CIMB 8001234567", "akaun 1234-5678-9012",
+                     "beneficiary account 123456789012"]:
+            self.assertEqual(scan(text, ["bank_account"], []), ["bank_account"], text)
+        self.assertEqual(scan("we opened 2 bank branches in 2024", ["bank_account"], []), [])
+        for text in ["call me at 012-345 6789", "+60 12-345 6789", "03-2345 6789"]:
+            self.assertEqual(scan(text, ["phone"], []), ["phone"], text)
+
+    def test_mask(self):
+        text = ("ID admin, password - mei239erngdfu, card 4111 1111 1111 1111, Maybank acc 514012345678, "
+                "IC 900101-14-5678, call 012-345 6789, db postgres://u:p4ss@h/x, Project Falcon")
+        masked = mask(text, ["phone"], ["project falcon"])
+        self.assertEqual(masked, "ID admin, password - ********, card [CARD ****1111], Maybank acc [BANK ACCOUNT], "
+                                 "IC [MYKAD], call [PHONE], db postgres://[CREDENTIALS]@h/x, [KEYWORD]")
+        # Credentials and bank data are masked even when the policy does not list those detectors.
+        self.assertEqual(mask("pin: 4321", [], []), "pin: ********")
+        self.assertEqual(mask("hello world", ["phone"], []), "hello world")
+
+    def test_describe(self):
+        self.assertEqual(describe(["credentials"]), "a password or login credential")
+        self.assertEqual(describe(["credit_card", "keyword:x", "keyword:y"]), "a card number and a restricted keyword")
 
     def test_luhn_filters_random_digits(self):
         self.assertEqual(scan("order 1234 5678 9012 3456", ["credit_card"], []), [])
@@ -196,7 +218,10 @@ class AgentTests(unittest.TestCase):
 
         capturing = make_agent({**BASE_POLICY, "capture_prompts": True})
         capturing.handle_prompt("chatgpt", text="hello")
-        self.assertEqual(capturing.store.pending_events()[0]["prompt_text"], "hello")
+        r = capturing.handle_prompt("chatgpt", text="card 4111111111111111 pwd: hunter22")
+        self.assertIn("a card number", r["message"])
+        stored = [e["prompt_text"] for e in capturing.store.pending_events()]
+        self.assertEqual(stored, ["hello", "card [CARD ****1111] pwd: ********"])
 
     def test_hosts_tick_blocks_only_blocked_tools(self):
         agent = make_agent(BASE_POLICY)

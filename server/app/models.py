@@ -2,8 +2,10 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import JSON, BigInteger, Boolean, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy.types import TypeDecorator
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from .crypto import decrypt, encrypt
 from .db import Base
 
 
@@ -13,6 +15,19 @@ def _uuid() -> str:
 
 def utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+class EncryptedText(TypeDecorator):
+    """Text column that is encrypted before it reaches the database."""
+
+    impl = Text
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        return encrypt(value) if value is not None else None
+
+    def process_result_value(self, value, dialect):
+        return decrypt(value) if value is not None else None
 
 
 class Tenant(Base):
@@ -158,8 +173,9 @@ class UsageEvent(Base):
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     duration_seconds: Mapped[int] = mapped_column(Integer, default=0)
     prompt_chars: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    # Only stored when the device's policy has capture_prompts enabled.
-    prompt_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Only stored when the device's policy has capture_prompts enabled. Sensitive values are masked by the
+    # agent before upload, and the text is encrypted at rest.
+    prompt_text: Mapped[str | None] = mapped_column(EncryptedText, nullable=True)
     prompt_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     dlp_hits: Mapped[list] = mapped_column(JSON, default=list)
     received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

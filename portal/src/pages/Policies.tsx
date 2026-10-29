@@ -6,7 +6,8 @@ import { fmtDate, useApi } from "../hooks";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DETECTOR_LABELS: Record<string, string> = {
-  credentials: "Passwords & login credentials",
+  credentials: "Passwords, PINs, OTP/TAC & logins",
+  bank_account: "Bank account numbers",
   email: "Email addresses", credit_card: "Credit card numbers", phone: "Phone numbers",
   api_key: "API keys & secrets", my_nric: "Malaysian IC (MyKad) numbers", ip_address: "IP addresses", iban: "IBAN bank accounts",
 };
@@ -233,8 +234,10 @@ function PolicyEditor({ policy, tools, detectors, readOnly, onClose, onSaved }: 
         {rules.capture_prompts && (
           <div className="stack" style={{ gap: 8 }}>
             <p className="notice">
-              Users will see a notice on AI sites that their prompts are recorded. Make sure your employee monitoring
-              notice and local privacy law (e.g. PDPA) cover this. Only admins and owners can read recorded prompts.
+              Users will see a notice on AI sites that their prompts are recorded. Passwords, card and bank numbers,
+              IC numbers and other detected values are masked on the PC before upload, and stored prompts are
+              encrypted. Make sure your employee monitoring notice and local privacy law (e.g. PDPA) cover this.
+              Only admins and owners can read recorded prompts.
             </p>
             <label className="field" style={{ maxWidth: 320 }}>Keep recorded prompts for (days)
               <input type="number" min={1} max={3650} value={rules.prompt_retention_days}

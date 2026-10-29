@@ -116,7 +116,7 @@ export default function Usage() {
           </table>
           {selected.prompt_text !== null && (
             <>
-              <h3>Recorded prompt</h3>
+              <h3>Recorded prompt <span className="subtle">(sensitive values masked)</span></h3>
               <pre className="secret mono" style={{ whiteSpace: "pre-wrap" }}>{selected.prompt_text}</pre>
             </>
           )}

@@ -13,7 +13,7 @@ SCHEMA_VERSION = 1
 
 Action = Literal["allow", "warn", "block"]
 
-DLP_DETECTORS = ["credentials", "email", "credit_card", "phone", "api_key", "my_nric", "ip_address", "iban"]
+DLP_DETECTORS = ["credentials", "bank_account", "email", "credit_card", "phone", "api_key", "my_nric", "ip_address", "iban"]
 
 _HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
@@ -48,11 +48,12 @@ class Schedule(BaseModel):
 
 
 class DLPSettings(BaseModel):
-    enabled: bool = False
-    detectors: list[str] = Field(default_factory=lambda: ["credentials", "credit_card", "api_key", "my_nric"])
+    enabled: bool = True
+    detectors: list[str] = Field(default_factory=lambda: ["credentials", "bank_account", "credit_card", "iban",
+                                                          "phone", "api_key", "my_nric"])
     # Case-insensitive words or phrases, e.g. project code names.
     keywords: list[str] = Field(default_factory=list)
-    action: Literal["log", "warn", "block"] = "warn"
+    action: Literal["log", "warn", "block"] = "block"
 
     @field_validator("detectors")
     @classmethod

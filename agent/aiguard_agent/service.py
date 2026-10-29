@@ -12,7 +12,7 @@ from . import __version__
 from .api import ApiError, ServerClient
 from .catalog import ToolMatcher, current_os
 from .config import AgentConfig
-from .dlp import scan
+from .dlp import describe, mask, scan
 from .enforcement import HostsBlocker, Notifier, terminate
 from .monitors.network import NetworkMonitor, is_extension_browser
 from .monitors.process import process_user, scan_ai_processes
@@ -148,11 +148,13 @@ class Agent:
             tool_key=tool_key, source="browser", event_type="dlp" if hits else "prompt",
             action=ACTION_TO_EVENT[action][1], reason=("sensitive data: " + ", ".join(hits)) if hits else "",
             domain=domain, url=url, prompt_chars=len(text) if text is not None else chars,
-            prompt_text=text if capture else None, dlp_hits=hits,
+            # Sensitive values are masked here, so they never leave the PC in clear text.
+            prompt_text=mask(text, dlp.get("detectors", []), dlp.get("keywords", [])) if capture and text else None,
+            dlp_hits=hits,
         )
         message = ""
         if hits and action != "allow":
-            message = f"Your prompt appears to contain sensitive data ({', '.join(hits)})."
+            message = f"Your prompt appears to contain {describe(hits)}. Remove it before sending."
         elif action == "block":
             message = tool_decision.message
         return {"action": action, "hits": hits, "message": message}

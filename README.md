@@ -22,8 +22,13 @@ See [docs/architecture.md](docs/architecture.md) for how the pieces fit together
 **Policies** (assigned per group, with a tenant-wide default):
 - Per tool: allow, warn (interstitial the user must acknowledge) or block. Also a default for tools without their own rule.
 - Daily time limits per tool and in total, plus allowed hours/days (e.g. Mon–Fri 08:00–18:00).
-- Sensitive-data checks on prompts (credit cards with Luhn check, API keys, Malaysian MyKad numbers, emails, phone numbers, IPs, IBANs, custom keywords) with the action log, warn or block.
-- Prompt recording: **off by default**, enabled per policy, with its own retention period. Users see a notice on AI sites when it's on. Only admins and owners can read recorded prompts.
+- Sensitive-data checks on prompts, on by default with the action block: passwords, PINs, OTP/TAC codes and logins,
+  bank account numbers, card numbers (with Luhn check), IBANs, Malaysian MyKad numbers, phone numbers and API keys.
+  Email and IP address checks and custom keywords are optional. Each policy chooses log, warn or block.
+- Prompt recording: **off by default**, enabled per policy, with its own retention period. Users see a notice on AI
+  sites when it's on. Sensitive values are masked on the PC before upload (`password: ********`,
+  `[CARD ****1111]`, `[BANK ACCOUNT]`, `[MYKAD]`), stored prompts are encrypted with AES-256-GCM, and only
+  admins and owners can read them.
 - Enforcement: the browser redirects blocked sites before they load, the agent closes blocked desktop apps, and the hosts file blocks the domains for every other browser and app.
 
 **Portal**:
@@ -90,8 +95,9 @@ AIGUARD_DATA_DIR=./.data python -m aiguard_agent run -v
 
 Monitoring employees' AI use, and especially recording prompts, is personal-data processing. Before enabling it,
 make sure your employee monitoring notice, acceptable-use policy and local law cover it (Malaysia's PDPA 2010, or GDPR
-for EU staff). AI Guard keeps prompt recording off by default, shows users a notice when it's on, limits who can
-read prompts, and deletes them after the policy's retention period.
+for EU staff). AI Guard keeps prompt recording off by default, shows users a notice when it's on, masks sensitive
+values before they leave the PC, encrypts stored prompts, limits who can read them, and deletes them after the
+policy's retention period. Back up `PROMPT_ENCRYPTION_KEY`, because recorded prompts can't be read without it.
 
 ## Known limitations (MVP)
 

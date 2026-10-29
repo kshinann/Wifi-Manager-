@@ -77,6 +77,22 @@ def test_prompt_text_dropped_unless_capture_enabled(client):
     assert any(i["prompt_text"] == "hello world" for i in items)
 
 
+def test_prompt_text_encrypted_at_rest(client):
+    from sqlalchemy import text
+
+    admin = signup(client, "Acme", "a@acme-corp.com")
+    device = enroll(client, admin)
+    policy = client.get("/api/policies", headers=admin).json()[0]
+    client.put(f"/api/policies/{policy['id']}", json={"rules": policy["rules"] | {"capture_prompts": True}},
+               headers=admin)
+    client.post("/api/agent/events", json={"events": [event(prompt_text="password: ********")]}, headers=device)
+    with engine.connect() as conn:
+        stored = conn.execute(text("SELECT prompt_text FROM usage_events")).scalar_one()
+    assert stored.startswith("enc:v1:") and "password" not in stored
+    items = client.get("/api/usage/events", headers=admin).json()["items"]
+    assert items[0]["prompt_text"] == "password: ********"
+
+
 def test_group_policy_overrides_default(client):
     admin = signup(client, "Acme", "a@acme-corp.com")
     rules = client.get("/api/policies/template", headers=admin).json()["rules"]

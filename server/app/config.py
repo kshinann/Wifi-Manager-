@@ -22,6 +22,8 @@ class Settings:
     cors_origins: list[str] = field(
         default_factory=lambda: [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
     )
+    # Base64-encoded 32-byte key for recorded prompt text. Back it up: prompts cannot be read without it.
+    prompt_encryption_key: str | None = field(default_factory=lambda: os.getenv("PROMPT_ENCRYPTION_KEY") or None)
     retention_interval_seconds: int = field(default_factory=lambda: int(os.getenv("RETENTION_INTERVAL_SECONDS", "3600")))
 
 

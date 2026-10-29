@@ -5,13 +5,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import func, select
+from sqlalchemy import Text, func, select, type_coerce, update
 
 from . import retention
 from .catalog import seed_builtin_tools
 from .config import settings
+from .crypto import PREFIX
 from .db import Base, SessionLocal, engine
-from .models import User
+from .models import UsageEvent, User
 from .routers import admin, agent, auth, devices, platform, usage
 from .security import hash_password
 
@@ -29,6 +30,18 @@ def init_db() -> None:
                         role="owner", is_platform_admin=True))
             db.commit()
             log.info("created platform admin %s", email)
+        encrypt_legacy_prompts(db)
+
+
+def encrypt_legacy_prompts(db) -> None:
+    """Encrypt prompt text stored before encryption at rest was added."""
+    raw = type_coerce(UsageEvent.prompt_text, Text)  # read the stored value without decrypting
+    rows = db.execute(select(UsageEvent.id, raw).where(raw.is_not(None), ~raw.startswith(PREFIX))).all()
+    for event_id, text in rows:
+        db.execute(update(UsageEvent).where(UsageEvent.id == event_id).values(prompt_text=text))
+    db.commit()
+    if rows:
+        log.info("encrypted %d previously stored prompts", len(rows))
 
 
 def _run_retention() -> None:
