@@ -3,9 +3,12 @@
 import re
 
 _PATTERNS = {
-    # Passwords typed as "password: x", "pwd=x", "kata laluan: x", URLs with user:pass@, private keys.
+    # Passwords typed as "password: x", "pwd = x", "password - x", "password is x", "kata laluan: x",
+    # "password Abc123" (bare value only when it contains a digit, so "password policy" does not match),
+    # URLs with user:pass@ and private keys.
     "credentials": re.compile(
-        r"(?i)(?:\b(?:password|passwd|passcode|passphrase|pwd|pass|kata\s*laluan|katalaluan)\b\s*(?:is\b|=|:)\s*\S+"
+        r"(?i)(?:\b(?:password|passwd|passcode|passphrase|pwd|pw|p/w|pass|kata\s*laluan|katalaluan)\b"
+        r"(?:\s*(?:is\b|[:=\-\u2013\u2014>]+)\s*\S+|\s+(?=\S*\d)\S{6,})"
         r"|\b[a-z][a-z0-9+.-]*://[^\s:/@]+:[^\s@/]+@"
         r"|-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----)"
     ),

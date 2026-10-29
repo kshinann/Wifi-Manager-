@@ -77,9 +77,11 @@ class DlpTests(unittest.TestCase):
     def test_credentials(self):
         for text in ["login ID adam, password: Abc12345", "my pwd=hunter2", "Password is S3cret!",
                      "kata laluan: rahsia123", "postgres://admin:s3cret@db.local/app",
-                     "-----BEGIN OPENSSH PRIVATE KEY-----"]:
+                     "-----BEGIN OPENSSH PRIVATE KEY-----", "admi@varia.com\npassword - mei239erngdfu",
+                     "password \u2013 x7y8z9", "pw: abc", "my password Abc12345"]:
             self.assertEqual(scan(text, ["credentials"], []), ["credentials"], text)
-        for text in ["how do I reset my password?", "password policy best practices", "passport renewal"]:
+        for text in ["how do I reset my password?", "password policy best practices", "passport renewal",
+                     "change password every 90 days", "pass the salt"]:
             self.assertEqual(scan(text, ["credentials"], []), [], text)
 
     def test_luhn_filters_random_digits(self):
