@@ -6,6 +6,7 @@ import { fmtDate, useApi } from "../hooks";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DETECTOR_LABELS: Record<string, string> = {
+  credentials: "Passwords & login credentials",
   email: "Email addresses", credit_card: "Credit card numbers", phone: "Phone numbers",
   api_key: "API keys & secrets", my_nric: "Malaysian IC (MyKad) numbers", ip_address: "IP addresses", iban: "IBAN bank accounts",
 };

@@ -3,6 +3,12 @@
 import re
 
 _PATTERNS = {
+    # Passwords typed as "password: x", "pwd=x", "kata laluan: x", URLs with user:pass@, private keys.
+    "credentials": re.compile(
+        r"(?i)(?:\b(?:password|passwd|passcode|passphrase|pwd|pass|kata\s*laluan|katalaluan)\b\s*(?:is\b|=|:)\s*\S+"
+        r"|\b[a-z][a-z0-9+.-]*://[^\s:/@]+:[^\s@/]+@"
+        r"|-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----)"
+    ),
     "email": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
     "credit_card": re.compile(r"\b(?:\d[ -]?){13,19}\b"),
     "phone": re.compile(r"(?<!\d)(?:\+?\d{1,3}[ -]?)?(?:\(?\d{2,4}\)?[ -]?)\d{3,4}[ -]?\d{4}(?!\d)"),

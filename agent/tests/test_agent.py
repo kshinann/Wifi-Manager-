@@ -74,6 +74,14 @@ class DlpTests(unittest.TestCase):
         self.assertEqual(scan(text, ["credit_card", "api_key", "my_nric", "email"], []),
                          ["credit_card", "api_key", "my_nric", "email"])
 
+    def test_credentials(self):
+        for text in ["login ID adam, password: Abc12345", "my pwd=hunter2", "Password is S3cret!",
+                     "kata laluan: rahsia123", "postgres://admin:s3cret@db.local/app",
+                     "-----BEGIN OPENSSH PRIVATE KEY-----"]:
+            self.assertEqual(scan(text, ["credentials"], []), ["credentials"], text)
+        for text in ["how do I reset my password?", "password policy best practices", "passport renewal"]:
+            self.assertEqual(scan(text, ["credentials"], []), [], text)
+
     def test_luhn_filters_random_digits(self):
         self.assertEqual(scan("order 1234 5678 9012 3456", ["credit_card"], []), [])
 
