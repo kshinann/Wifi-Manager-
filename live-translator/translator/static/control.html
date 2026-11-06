@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live Translator</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header>
+  <h1>Live Translator — control panel</h1>
+  <span id="state" class="pill">stopped</span>
+  <button id="startBtn" class="primary">Start</button>
+  <button id="stopBtn">Stop</button>
+</header>
+<main>
+  <section>
+    <h2>Status</h2>
+    <div class="row muted" id="hw"></div>
+    <div class="row muted" id="engineLabels"></div>
+    <div class="muted" id="lan"></div>
+    <div class="log" id="log"></div>
+  </section>
+
+  <section>
+    <h2>Routes — input → languages → outputs</h2>
+    <p class="hint">Each <b>route</b> listens to one input (a mic, a meeting's audio through VB-Cable, a radio line-in, or a phone/browser mic).
+      Each <b>channel</b> translates into one language and sends it to a web room for listeners and/or spoken out of one or more sound outputs
+      (e.g. <i>CABLE Input</i>, which is the mic of the other room's Zoom/Teams/Meet, or the line out to a radio transmitter).</p>
+    <div id="routes"></div>
+    <div class="row">
+      <button id="addRoute">+ Add route</button>
+      <button id="refreshDevices">Refresh devices</button>
+      <button id="saveRoutes" class="primary">Save routes</button>
+      <span class="muted" id="saveMsg"></span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Live captions</h2>
+    <div class="feed" id="feed"></div>
+  </section>
+
+  <section>
+    <h2>AI engines</h2>
+    <div class="grid">
+      <label>Speech → text
+        <select id="eng_asr">
+          <option value="local">Built-in Whisper (this PC, offline)</option>
+          <option value="openai">OpenAI (API key)</option>
+        </select></label>
+      <label>Translation
+        <select id="eng_translate">
+          <option value="local">Built-in NLLB (this PC, offline)</option>
+          <option value="claude">Anthropic Claude (API key)</option>
+          <option value="openai">OpenAI GPT (API key)</option>
+        </select></label>
+      <label>Text → speech
+        <select id="eng_tts">
+          <option value="edge">Edge neural voices (free, needs internet)</option>
+          <option value="local">Windows voices (offline)</option>
+          <option value="openai">OpenAI TTS (API key)</option>
+        </select></label>
+    </div>
+    <div class="grid">
+      <label>Processor
+        <select id="local_device">
+          <option value="auto">Auto-detect (GPU if available)</option>
+          <option value="cuda">NVIDIA GPU</option>
+          <option value="cpu">CPU only</option>
+        </select></label>
+      <label>Whisper model
+        <select id="local_whisper_model">
+          <option value="auto">Auto (GPU: large-v3-turbo, CPU: small)</option>
+          <option>tiny</option><option>base</option><option>small</option><option>medium</option>
+          <option>large-v3-turbo</option><option>large-v3</option>
+        </select></label>
+      <label>NLLB model <input id="local_nllb_model"></label>
+    </div>
+    <h2>API keys (optional — for better or faster results)</h2>
+    <div class="grid">
+      <label>OpenAI API key <input id="key_openai" type="password" autocomplete="off" placeholder="sk-..."></label>
+      <label>Anthropic API key <input id="key_anthropic" type="password" autocomplete="off" placeholder="sk-ant-..."></label>
+      <label>Claude model <input id="cloud_claude_model"></label>
+      <label>Claude effort
+        <select id="cloud_claude_effort"><option>low</option><option>medium</option><option>high</option></select></label>
+      <label>OpenAI speech model <input id="cloud_openai_asr_model"></label>
+      <label>OpenAI translate model <input id="cloud_openai_translate_model"></label>
+      <label>OpenAI TTS model <input id="cloud_openai_tts_model"></label>
+      <label>OpenAI TTS voice <input id="cloud_openai_tts_voice"></label>
+    </div>
+    <label>Glossary for AI translators (one per line, e.g. <code>board meeting = 董事会会议</code>)
+      <textarea id="glossary" rows="3"></textarea></label>
+    <h2>Voice detection</h2>
+    <div class="grid">
+      <label>Pause that ends a sentence (ms) <input id="vad_silence_ms" type="number" min="200" max="3000"></label>
+      <label>Longest segment (s) <input id="vad_max_segment_s" type="number" min="3" max="30"></label>
+      <label>Minimum loudness (0.001–0.05) <input id="vad_min_rms" type="number" step="0.001"></label>
+      <label>Admin token (lets other devices use this panel or the phone mic) <input id="admin_token" type="password" autocomplete="off"></label>
+    </div>
+    <div class="row"><button id="saveSettings" class="primary">Save settings</button><span class="muted" id="settingsMsg"></span></div>
+  </section>
+</main>
+<script src="/static/control.js"></script>
+</body>
+</html>

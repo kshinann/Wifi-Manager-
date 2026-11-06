@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Choose Language</title>
+<link rel="stylesheet" href="/static/app.css">
+<style> .rooms a { display:block; padding:16px; margin:10px 0; font-size:20px; border:1px solid var(--line); border-radius:10px; background:var(--panel); text-decoration:none; } </style>
+</head>
+<body>
+<header><h1>Choose your language · 选择语言 · Pilih bahasa</h1></header>
+<main><div class="rooms" id="rooms"><p class="muted">Loading…</p></div></main>
+<script>
+"use strict";
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+fetch("/api/public").then((r) => r.json()).then((p) => {
+  const box = document.getElementById("rooms");
+  box.innerHTML = p.channels.length
+    ? p.channels.map((c) => `<a href="/room/${encodeURIComponent(c.id)}">${esc(c.lang_name)}<div class="muted">${esc(c.route)}</div></a>`).join("")
+    : `<p class="muted">No translation rooms are set up yet.</p>`;
+  if (!p.running) box.insertAdjacentHTML("afterbegin", `<p class="hint">Translation has not started yet. Open a room and it will begin when the operator starts.</p>`);
+});
+</script>
+</body>
+</html>

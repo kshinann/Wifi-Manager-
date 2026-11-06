@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speaker Mic</title>
+<link rel="stylesheet" href="/static/app.css">
+<style> #mic { font-size: 22px; padding: 18px 28px; } .meter { width: 100%; height: 14px; } </style>
+</head>
+<body>
+<header><h1>Speaker microphone</h1><span id="conn" class="pill">off</span></header>
+<main>
+  <section>
+    <p>Your voice is sent to the translator. Keep this page open while you speak.</p>
+    <button id="mic" class="primary">🎙 Start microphone</button>
+    <p></p>
+    <div class="meter"><div id="lvl"></div></div>
+    <p class="muted" id="msg"></p>
+    <p class="hint">Phones only allow the microphone on <b>https://</b> pages or on the PC itself (localhost).
+      To use a phone over Wi-Fi, start the app with HTTPS (see README, “Phone as microphone”).</p>
+  </section>
+</main>
+<script>
+"use strict";
+const rid = decodeURIComponent(location.pathname.split("/").pop());
+const token = new URLSearchParams(location.search).get("token") || "";
+let ws, ctx, stream, node;
+
+async function start() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    document.getElementById("msg").textContent = "Microphone needs https:// or localhost.";
+    return;
+  }
+  stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const src = ctx.createMediaStreamSource(stream);
+  node = ctx.createScriptProcessor(4096, 1, 1);
+  const ratio = ctx.sampleRate / 16000;
+  node.onaudioprocess = (e) => {
+    if (!ws || ws.readyState !== 1) return;
+    const input = e.inputBuffer.getChannelData(0);
+    const n = Math.floor(input.length / ratio);
+    const out = new Int16Array(n);
+    for (let i = 0; i < n; i++) {
+      const s = Math.max(-1, Math.min(1, input[Math.floor(i * ratio)]));
+      out[i] = s * 32767;
+    }
+    ws.send(out.buffer);
+  };
+  src.connect(node); node.connect(ctx.destination);
+  ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/speak/${encodeURIComponent(rid)}${token ? "?token=" + encodeURIComponent(token) : ""}`);
+  const conn = document.getElementById("conn");
+  ws.onopen = () => { conn.textContent = "live"; conn.className = "pill running"; };
+  ws.onclose = () => { conn.textContent = "disconnected"; conn.className = "pill error"; };
+  ws.onmessage = (ev) => {
+    const m = JSON.parse(ev.data);
+    if (m.type === "level") document.getElementById("lvl").style.width = Math.min(100, m.level * 1000) + "%";
+    if (m.type === "warn") document.getElementById("msg").textContent = m.text;
+  };
+}
+function stop() {
+  if (node) node.disconnect();
+  if (stream) stream.getTracks().forEach((t) => t.stop());
+  if (ws) ws.close();
+  if (ctx) ctx.close();
+  ws = ctx = stream = node = null;
+}
+document.getElementById("mic").onclick = async (e) => {
+  if (ws) { stop(); e.target.textContent = "🎙 Start microphone"; return; }
+  try { await start(); e.target.textContent = "⏹ Stop microphone"; }
+  catch (err) { document.getElementById("msg").textContent = err.message; }
+};
+</script>
+</body>
+</html>

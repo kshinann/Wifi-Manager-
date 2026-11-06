@@ -1,0 +1,3 @@
+# Optional cloud AI (enter API keys in the control panel)
+anthropic>=1.0
+openai>=1.40

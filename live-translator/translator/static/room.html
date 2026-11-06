@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Translation Room</title>
+<link rel="stylesheet" href="/static/app.css">
+<style>
+  .captions { font-size: clamp(20px, 4.5vw, 34px); line-height: 1.35; color: var(--caption); }
+  .captions .line { padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .captions .orig { font-size: .55em; color: var(--muted); margin-top: 4px; }
+  #audioBtn.on { background: var(--ok); color: #fff; border-color: var(--ok); }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Translation room</h1>
+  <button id="audioBtn" class="primary">🔊 Tap to hear translation</button>
+  <label class="row" style="margin:0"><input type="checkbox" id="showOrig"> show original</label>
+  <span id="conn" class="pill">connecting…</span>
+</header>
+<main>
+  <div class="captions" id="captions"><p class="muted">Waiting for the speaker…</p></div>
+</main>
+<script>
+"use strict";
+const cid = decodeURIComponent(location.pathname.split("/").pop());
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let audioOn = false, playing = false, ctx = null;
+const queue = [];
+const box = document.getElementById("captions");
+
+fetch("/api/public").then((r) => r.json()).then((p) => {
+  const ch = p.channels.find((c) => c.id === cid);
+  if (ch) { document.title = `${ch.lang_name} — ${ch.route}`; document.getElementById("title").textContent = `${ch.lang_name} · ${ch.route}`; }
+});
+
+document.getElementById("audioBtn").onclick = (e) => {
+  audioOn = !audioOn;
+  if (audioOn && !ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (ctx && ctx.state === "suspended") ctx.resume();
+  e.target.classList.toggle("on", audioOn);
+  e.target.textContent = audioOn ? "🔊 Audio on" : "🔇 Audio off";
+  if (!audioOn) queue.length = 0;
+};
+document.getElementById("showOrig").onchange = (e) =>
+  box.querySelectorAll(".orig").forEach((o) => (o.hidden = !e.target.checked));
+
+async function playNext() {
+  if (playing || !queue.length) return;
+  playing = true;
+  try {
+    const buf = await ctx.decodeAudioData(await queue.shift().arrayBuffer());
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.connect(ctx.destination);
+    src.onended = () => { playing = false; playNext(); };
+    src.start();
+  } catch (e) { playing = false; playNext(); }
+}
+
+function addCaption(m) {
+  if (box.querySelector("p.muted")) box.innerHTML = "";
+  const d = document.createElement("div");
+  d.className = "line";
+  d.innerHTML = `<div>${esc(m.text)}</div><div class="orig"${document.getElementById("showOrig").checked ? "" : " hidden"}>${esc(m.source)}</div>`;
+  box.prepend(d);
+  while (box.children.length > 60) box.lastChild.remove();
+}
+
+function connect() {
+  const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/room/${encodeURIComponent(cid)}`);
+  ws.binaryType = "blob";
+  const conn = document.getElementById("conn");
+  let ping;
+  ws.onopen = () => { conn.textContent = "live"; conn.className = "pill running"; ping = setInterval(() => ws.send("ping"), 20000); };
+  ws.onmessage = (ev) => {
+    if (typeof ev.data === "string") { const m = JSON.parse(ev.data); if (m.type === "caption") addCaption(m); }
+    else if (audioOn && ctx) { queue.push(ev.data); if (queue.length > 6) queue.shift(); playNext(); }
+  };
+  ws.onclose = () => { clearInterval(ping); conn.textContent = "reconnecting…"; conn.className = "pill starting"; setTimeout(connect, 2000); };
+}
+connect();
+</script>
+</body>
+</html>
