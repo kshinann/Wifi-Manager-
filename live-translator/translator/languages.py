@@ -45,5 +45,6 @@ def name(code):
     return LANGUAGES.get(code, {}).get("name", code)
 
 
-def catalogue():
-    return [{"code": k, "name": v["name"], "voice": v["edge_voice"]} for k, v in LANGUAGES.items()]
+def catalogue(allowed=None):
+    return [{"code": k, "name": v["name"], "voice": v["edge_voice"]} for k, v in LANGUAGES.items()
+            if not allowed or k in allowed]

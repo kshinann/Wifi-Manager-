@@ -75,6 +75,8 @@ function renderRoutes() {
           <label>Voice (blank = default for language) <input data-c="voice" value="${esc(c.voice)}" placeholder="${esc((languages.find((l) => l.code === c.target_lang) || {}).voice || "")}"></label>
           <label>Speak out of (Ctrl+click for several)
             <select data-c="outputs" multiple>${deviceOptions(devices.outputs, c.outputs, true)}</select></label>
+          <label>Also speak to outputs named (comma-separated, matched on Start)
+            <input data-c="output_names" value="${esc((c.output_names || []).join(", "))}" placeholder="CABLE Input"></label>
         </div>
         <div class="row">
           <label class="row" style="margin:0"><input type="checkbox" data-c="speak"${c.speak ? " checked" : ""}> spoken audio</label>
@@ -87,6 +89,7 @@ function renderRoutes() {
       cd.querySelectorAll("[data-c]").forEach((el) => el.addEventListener("change", () => {
         const k = el.dataset.c;
         if (k === "outputs") c.outputs = [...el.selectedOptions].map((o) => Number(o.value));
+        else if (k === "output_names") c.output_names = el.value.split(",").map((x) => x.trim()).filter(Boolean);
         else if (el.type === "checkbox") c[k] = el.checked;
         else c[k] = el.value;
         if (k === "target_lang") renderRoutes();

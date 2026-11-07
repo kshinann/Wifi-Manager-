@@ -34,7 +34,7 @@ def lan_ips():
     return sorted(ips)
 
 
-def create_app(store=None, engines_factory=None, input_factory=None, players=None):
+def create_app(store=None, engines_factory=None, input_factory=None, players=None, output_resolver=None):
     store = store or ConfigStore()
     hub = Hub()
     if engines_factory is None:
@@ -44,7 +44,9 @@ def create_app(store=None, engines_factory=None, input_factory=None, players=Non
         players = PlayerPool()
     if input_factory is None:
         from .audio_devices import DeviceInput as input_factory
-    manager = Manager(store, hub, players, engines_factory, input_factory)
+    if output_resolver is None:
+        from .audio_devices import find_output as output_resolver
+    manager = Manager(store, hub, players, engines_factory, input_factory, output_resolver)
 
     def is_admin(conn):
         host = conn.client.host if conn.client else ""
@@ -74,7 +76,7 @@ def create_app(store=None, engines_factory=None, input_factory=None, players=Non
                      "lang_name": languages.name(c["target_lang"]), "listeners": hub.listeners(f"ch:{c['id']}")}
                     for r in cfg["routes"] if r.get("enabled", True) for c in r["channels"] if c.get("web", True)]
         return JSONResponse({"channels": channels, "running": manager.state == "running",
-                             "languages": languages.catalogue()})
+                             "languages": languages.catalogue(cfg.get("allowed_languages"))})
 
     async def transcript(request):
         cid = request.path_params["cid"]
@@ -98,7 +100,8 @@ def create_app(store=None, engines_factory=None, input_factory=None, players=Non
     # ---------------- admin (operator) ----------------
     @admin
     async def get_config(request):
-        return JSONResponse({"config": store.public(), "languages": languages.catalogue()})
+        return JSONResponse({"config": store.public(),
+                             "languages": languages.catalogue(store.get().get("allowed_languages"))})
 
     @admin
     async def put_config(request):

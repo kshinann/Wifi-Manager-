@@ -33,6 +33,7 @@ DEFAULTS = {
     "api_keys": {"openai": "", "anthropic": ""},
     "vad": {"silence_ms": 700, "max_segment_s": 12, "min_rms": 0.008},
     "admin_token": "",
+    "allowed_languages": [],  # e.g. ["en", "zh"] to show only these in the panel (empty = all)
     "glossary": "",  # optional "term = 翻译" lines passed to AI translators
     "routes": [
         {
@@ -63,10 +64,14 @@ def _merge(base, override):
 
 
 class ConfigStore:
-    def __init__(self, path=None):
+    def __init__(self, path=None, preset=None):
+        """`preset`: JSON file used as the starting settings the first time (no config yet)."""
         self.path = Path(path) if path else DATA_DIR / "config.json"
         self._lock = threading.Lock()
         self._data = self._load()
+        if preset and not self.path.exists():
+            data = json.loads(Path(preset).read_text(encoding="utf-8"))
+            self.update(data)
 
     def _load(self):
         data = DEFAULTS
@@ -153,6 +158,8 @@ def validate_routes(routes):
                 "speak": bool(c.get("speak", True)),
                 "web": bool(c.get("web", True)),
                 "outputs": [int(o) for o in (c.get("outputs") or [])],
+                # matched by name at start, so presets work on any PC (e.g. "CABLE Input")
+                "output_names": [str(n).strip() for n in (c.get("output_names") or []) if str(n).strip()],
             })
         clean.append({
             "id": rid,

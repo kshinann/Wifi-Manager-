@@ -120,3 +120,23 @@ class PlayerPool:
             for p in self._players.values():
                 p.close()
             self._players.clear()
+
+
+_HOSTAPI_PREFERENCE = ("Windows WASAPI", "Windows DirectSound", "MME")
+
+
+def find_output(name):
+    """Index of the output device whose name contains `name` (case-insensitive),
+    preferring WASAPI on Windows. None if not found."""
+    try:
+        sd = _sd()
+        devices, hostapis = sd.query_devices(), sd.query_hostapis()
+    except Exception:
+        return None
+    want = name.lower()
+    matches = [(i, hostapis[d["hostapi"]]["name"]) for i, d in enumerate(devices)
+               if d["max_output_channels"] > 0 and want in d["name"].lower()]
+    if not matches:
+        return None
+    rank = {api: n for n, api in enumerate(_HOSTAPI_PREFERENCE)}
+    return min(matches, key=lambda m: rank.get(m[1], len(rank)))[0]

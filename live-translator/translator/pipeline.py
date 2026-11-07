@@ -139,12 +139,13 @@ class Route:
 class Manager:
     """Owns engines and routes; started/stopped from the control panel."""
 
-    def __init__(self, store, hub, players, engines_factory, input_factory=None):
+    def __init__(self, store, hub, players, engines_factory, input_factory=None, output_resolver=None):
         self.store = store
         self.hub = hub
         self.players = players
         self.engines_factory = engines_factory
         self.input_factory = input_factory
+        self.output_resolver = output_resolver
         self.state = "stopped"
         self.error = None
         self.engines = None
@@ -175,6 +176,7 @@ class Manager:
             for rc in cfg["routes"]:
                 if not rc.get("enabled", True) or not rc["channels"]:
                     continue
+                self._resolve_output_names(rc)
                 r = Route(rc, self.engines, self.hub, self.players, cfg["vad"], self.log, self.input_factory)
                 try:
                     r.start()
@@ -196,6 +198,17 @@ class Manager:
                 self.state, self.error = "error", str(e)
             self.log(f"Start failed: {e}")
             self._stop_routes()
+
+    def _resolve_output_names(self, rc):
+        for ch in rc["channels"]:
+            for name in ch.get("output_names") or []:
+                idx = self.output_resolver(name) if self.output_resolver else None
+                if idx is None:
+                    self.log(f"Output '{name}' not found on this PC (is VB-Cable installed?). "
+                             f"{languages.name(ch['target_lang'])} still goes to the web room.")
+                elif idx not in ch["outputs"]:
+                    ch["outputs"] = list(ch["outputs"]) + [idx]
+                    self.log(f"{languages.name(ch['target_lang'])} voice → sound output '{name}' (#{idx})")
 
     def stop(self):
         self._stop_routes()

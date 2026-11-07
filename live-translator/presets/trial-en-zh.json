@@ -1,0 +1,25 @@
+{
+  "engines": {"asr": "local", "translate": "local", "tts": "edge"},
+  "local": {"device": "auto", "whisper_model": "auto", "nllb_model": "facebook/nllb-200-distilled-600M"},
+  "allowed_languages": ["en", "zh"],
+  "routes": [
+    {
+      "id": "trial",
+      "name": "Trial: English speaker → Mandarin",
+      "enabled": true,
+      "input": {"type": "device", "device": null},
+      "source_lang": "en",
+      "channels": [
+        {
+          "id": "zh",
+          "target_lang": "zh",
+          "voice": "zh-CN-XiaoxiaoNeural",
+          "speak": true,
+          "web": true,
+          "outputs": [],
+          "output_names": ["CABLE Input"]
+        }
+      ]
+    }
+  ]
+}
