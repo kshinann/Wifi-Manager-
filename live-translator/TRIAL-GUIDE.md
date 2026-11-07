@@ -7,7 +7,7 @@ The trial does one thing: an **English speaker** talks into the PC's microphone,
 
 No API key is needed.
 
-**This trial is set up for a PC without a graphics card (CPU only).** It uses the *small* Whisper model and shorter speech chunks, so expect the Mandarin about **3–6 seconds after each sentence**. Ten seconds into the self-check (`trial-check.bat`), it tells you the delay measured on your PC. When you add an NVIDIA GPU later, the same app becomes about 1–3 s and more accurate. See *Adding a GPU later* below.
+**This trial is set up for a PC without a graphics card (CPU only).** It uses the *small* Whisper model and shorter speech chunks, so expect the Mandarin about **3–6 seconds after each sentence**. The self-check (`trial-check.bat`) tells you the delay measured on your PC. When you add an NVIDIA GPU later, the same app becomes about 1–3 s and more accurate. See *Adding a GPU later* below.
 
 ---
 
