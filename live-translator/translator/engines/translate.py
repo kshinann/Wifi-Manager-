@@ -38,6 +38,11 @@ class LocalNLLBTranslator:
                 import torch
                 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
                 self._tok = AutoTokenizer.from_pretrained(self.model_name)
+                if self.device == "cuda" and not torch.cuda.is_available():
+                    print("[translate] CUDA PyTorch not installed; using CPU (run upgrade-to-gpu.bat).")
+                    self.device = "cpu"
+                if self.device == "cpu":
+                    torch.set_num_threads(hardware.cpu_threads())
                 dtype = torch.float16 if self.device == "cuda" else torch.float32
                 self._model = AutoModelForSeq2SeqLM.from_pretrained(self.model_name, torch_dtype=dtype)
                 self._model.to(self.device).eval()
@@ -53,7 +58,8 @@ class LocalNLLBTranslator:
             batch = self._tok(text, return_tensors="pt", truncation=True, max_length=400).to(self.device)
             tgt_id = self._tok.convert_tokens_to_ids(languages.LANGUAGES[tgt]["nllb"])
             with torch.inference_mode():
-                out = self._model.generate(**batch, forced_bos_token_id=tgt_id, max_new_tokens=400, num_beams=4)
+                out = self._model.generate(**batch, forced_bos_token_id=tgt_id, max_new_tokens=400,
+                                           num_beams=4 if self.device == "cuda" else 2)  # 2 beams: faster on CPU
             return self._tok.batch_decode(out, skip_special_tokens=True)[0].strip()
 
 

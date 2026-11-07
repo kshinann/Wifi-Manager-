@@ -58,16 +58,23 @@ def run(store):
 
     step("4. English → Mandarin test")
     try:
-        t0 = time.monotonic()
         en_audio, sr = eng.tts.synthesize(SENTENCE, "en")
+        t0 = time.monotonic()
         heard, _ = eng.asr.transcribe(resample(en_audio, sr, 16000), "en")
         t1 = time.monotonic()
-        print(f"   Heard:      {heard}   ({t1 - t0:.1f} s incl. English voice)")
+        print(f"   Heard:      {heard}   (speech→text {t1 - t0:.1f} s)")
         zh = eng.translator.translate(heard or SENTENCE, "en", "zh")
         t2 = time.monotonic()
         print(f"   Mandarin:   {zh}   (translation {t2 - t1:.1f} s)")
         zh_audio, zsr = eng.tts.synthesize(zh, "zh")
-        print(f"   Voice made in {time.monotonic() - t2:.1f} s")
+        t3 = time.monotonic()
+        print(f"   Voice made in {t3 - t2:.1f} s")
+        delay = t3 - t0
+        print(f"   → Expected delay after each sentence: about {delay:.1f} s "
+              f"(engines: {', '.join(eng.labels().values())})")
+        if delay > 6:
+            print("   TIP   That is slow. In the control panel → AI engines, set Whisper model to 'base', "
+                  "or add a GPU later (run upgrade-to-gpu.bat).")
         out = DATA_DIR / "selftest-zh.wav"
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_bytes(encode_wav(zh_audio, zsr))

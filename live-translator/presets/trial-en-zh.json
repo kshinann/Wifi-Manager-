@@ -2,6 +2,7 @@
   "engines": {"asr": "local", "translate": "local", "tts": "edge"},
   "local": {"device": "auto", "whisper_model": "auto", "nllb_model": "facebook/nllb-200-distilled-600M"},
   "allowed_languages": ["en", "zh"],
+  "vad": {"silence_ms": 600, "max_segment_s": 8, "min_rms": 0.008},
   "routes": [
     {
       "id": "trial",

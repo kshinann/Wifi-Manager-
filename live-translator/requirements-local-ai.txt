@@ -1,6 +1,7 @@
 # Built-in (offline) AI that runs on this PC.
 # For an NVIDIA GPU, install the CUDA build of PyTorch first (install.bat does this):
-#   pip install torch --index-url https://download.pytorch.org/whl/cu121
+#   pip install torch --index-url https://download.pytorch.org/whl/cu128
+#   pip install nvidia-cublas-cu12 "nvidia-cudnn-cu12==9.*"     (Whisper on GPU)
 faster-whisper>=1.1.0
 transformers>=4.40
 sentencepiece>=0.2

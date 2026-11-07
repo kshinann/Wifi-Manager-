@@ -34,7 +34,7 @@ Choose each stage under **AI engines** in the control panel. You can mix them.
 | Translation | **Meta NLLB-200** (offline) | **Anthropic Claude** (default `claude-opus-5-5`, effort `low`), or OpenAI GPT |
 | Text → speech | **Edge neural voices**: free, needs internet, excellent Mandarin `zh-CN-XiaoxiaoNeural`; or **Windows voices**, fully offline | OpenAI TTS |
 
-- **GPU or CPU:** *Processor = Auto* detects an NVIDIA GPU. Expect roughly 1–3 s of delay on a GPU and 3–6 s on a CPU. You can force GPU or CPU.
+- **GPU or CPU:** *Processor = Auto* detects an NVIDIA GPU. Expect roughly 1–3 s of delay on a GPU and 3–6 s on a CPU. You can force GPU or CPU. If you add a GPU later, run `upgrade-to-gpu.bat`. If the GPU can't load, the app falls back to the CPU automatically.
 - **API keys** are saved only on this PC, in `data/config.json`, which is never committed. You can also set them with the `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` environment variables.
 - **Claude** uses Anthropic's server-side fallback: if a segment is declined, the API retries it on a recommended fallback model within the same call. Raise *Claude effort* for harder content. You can switch to a faster or cheaper model, such as `claude-haiku-5-5`, in the *Claude model* box.
 - **Glossary:** add company names and terms (`board meeting = 董事会会议`) so the AI translators keep them consistent.

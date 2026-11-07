@@ -12,8 +12,9 @@ class LocalWhisperASR:
 
     def __init__(self, cfg):
         local = cfg["local"]
+        self._model_setting = local.get("whisper_model", "auto")
         self.device = hardware.resolve_device(local.get("device", "auto"))
-        self.model_name = hardware.resolve_whisper_model(local.get("whisper_model", "auto"), self.device)
+        self.model_name = hardware.resolve_whisper_model(self._model_setting, self.device)
         self._model = None
         self._lock = threading.Lock()
 
@@ -24,9 +25,18 @@ class LocalWhisperASR:
     def load(self):
         with self._lock:
             if self._model is None:
+                hardware.prepare_cuda_dlls()
                 from faster_whisper import WhisperModel
-                compute = "float16" if self.device == "cuda" else "int8"
-                self._model = WhisperModel(self.model_name, device=self.device, compute_type=compute)
+                if self.device == "cuda":
+                    try:
+                        self._model = WhisperModel(self.model_name, device="cuda", compute_type="float16")
+                        return self
+                    except Exception as e:  # driver/cuDNN problem: keep working on the CPU
+                        print(f"[asr] GPU not usable ({e}); falling back to CPU.")
+                        self.device = "cpu"
+                        self.model_name = hardware.resolve_whisper_model(self._model_setting, "cpu")
+                self._model = WhisperModel(self.model_name, device="cpu", compute_type="int8",
+                                           cpu_threads=hardware.cpu_threads())
         return self
 
     def transcribe(self, audio, language=None):

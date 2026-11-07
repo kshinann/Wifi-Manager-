@@ -10,8 +10,9 @@ pip install -r requirements-cloud-ai.txt || goto :error
 REM Install the GPU build of PyTorch when an NVIDIA card is present, else the CPU build.
 where nvidia-smi >nul 2>nul
 if %errorlevel%==0 (
-  echo NVIDIA GPU found - installing CUDA PyTorch...
-  pip install torch --index-url https://download.pytorch.org/whl/cu121 || goto :error
+  echo NVIDIA GPU found - installing CUDA PyTorch and GPU libraries...
+  pip install torch --index-url https://download.pytorch.org/whl/cu128 || goto :error
+  pip install nvidia-cublas-cu12 "nvidia-cudnn-cu12==9.*" || goto :error
 ) else (
   echo No NVIDIA GPU found - installing CPU PyTorch...
   pip install torch --index-url https://download.pytorch.org/whl/cpu || goto :error
